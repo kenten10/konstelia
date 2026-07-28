@@ -1,0 +1,28 @@
+id: ruby-order-processing
+title: Ruby注文処理の流れ
+description: RubyのOrderServiceが商品検索から注文保存までを協調する流れをたどる
+steps:
+  - id: resolve-product
+    title: 商品を解決する
+    hops:
+      - summary: OrderService#createが注文作成を開始する
+        anchors:
+          - ref: ruby.order-service.create
+            emphasis: primary
+      - summary: catalogから商品を検索して存在を確認する
+        anchors:
+          - ref: ruby.order-service.find
+            emphasis: primary
+          - ref: ruby.order-service.missing-product
+            emphasis: secondary
+  - id: persist-order
+    title: 注文を保存する
+    hops:
+      - summary: repositoryへ組み立てた注文を保存する
+        anchors:
+          - ref: ruby.order-service.save
+            emphasis: primary
+      - summary: 保存した注文を呼び出し元へ返す
+        anchors:
+          - ref: ruby.order-service.return
+            emphasis: primary

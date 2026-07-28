@@ -1,0 +1,273 @@
+id: konstelia-playback-pipeline
+title: Konsteliaのツアー再生パイプライン
+description: コマンド内部の分岐、health評価、アンカー解決、描画、状態遷移までKonsteliaの再生処理を詳しくたどる
+steps:
+  - id: command-orchestration
+    title: コマンドが再生条件を整える
+    hops:
+      - summary: executeはUIからスコープを受け取り、キャンセルなら即座に終了する
+        body: |
+          chooseScopeへPersonal・Workspace・Repositoryの選択肢を渡します。戻り値が
+          undefinedなら処理を終えるため、以後のstorageアクセスは発生しません。
+        anchors:
+          - ref: konstelia.play-tour-command.choose-scope
+            emphasis: primary
+          - ref: konstelia.play-tour-command.execute
+            emphasis: secondary
+      - summary: RepositoryとWorkspaceでは一覧取得と同時にhealthを評価する
+        body: |
+          Personalはsource bindingを確定するまで正しいsource rootが分からないため、
+          まず通常の一覧だけを読みます。それ以外のスコープでは
+          ListToursWithHealth.executeを呼び、選択画面へhealth付きの候補を渡します。
+        anchors:
+          - ref: konstelia.play-tour-command.list-with-health
+            emphasis: primary
+          - ref: konstelia.list-tours-with-health.execute
+            emphasis: secondary
+      - summary: bindingの確認後、brokenなprimaryアンカーを持つツアーを拒否する
+        body: |
+          Personalの場合はensurePersonalSourceBindingが現在のworkspaceとの対応を確認します。
+          その後に再評価したhealthがBrokenなら、理由をUIへ表示して再生ユースケースを
+          呼びません。この順序により、古いbindingを使った誤判定を避けています。
+        anchors:
+          - ref: konstelia.play-tour-command.ensure-binding
+            emphasis: primary
+          - ref: konstelia.play-tour-command.block-broken
+            emphasis: secondary
+      - summary: すべての事前条件を通過したツアーだけをapplication層へ渡す
+        body: |
+          command層は選択済みscopeとtour IDだけをPlayTourへ渡します。ファイルパスや
+          YAMLの読み方を知らないため、UIとstorageの責務が混ざりません。
+        anchors:
+          - ref: konstelia.play-tour-command.delegate-play
+            emphasis: primary
+          - ref: konstelia.play-tour.execute
+            emphasis: secondary
+  - id: health-and-loading
+    title: health評価と同一スコープからのロード
+    hops:
+      - summary: ListToursWithHealthは同じscopeからツアー群とアンカー群を取得する
+        body: |
+          storageResolverとanchorRegistryResolverの両方へ同じTourScopeを渡します。
+          scanToursは無効なYAMLもissues付きで返し、loadAnchorsはそのscope専用の
+          anchors.yamlをロードします。
+        anchors:
+          - ref: konstelia.list-health.scan-tours
+            emphasis: primary
+          - ref: konstelia.list-health.load-anchors
+            emphasis: secondary
+      - summary: ValidateTourProjectがYAMLと実ソースをまとめて検証する
+        body: |
+          ツアー、アンカー、source readerを一つの入力へまとめます。validatorは参照整合性と
+          semantic anchorの解決結果を計算するため、presentation層は言語別解析を知りません。
+        anchors:
+          - ref: konstelia.list-health.validate
+            emphasis: primary
+      - summary: 検証結果をツアー単位のhealthy・drifted・brokenへ畳み込む
+        body: |
+          各ツアーの全hopを走査し、参照先がない場合やhealthyでないアンカーの理由を
+          Setへ集約します。無効なtourは除外し、有効なtourだけをtitle順の一覧にします。
+        anchors:
+          - ref: konstelia.list-health.summarize
+            emphasis: primary
+      - summary: PlayTourはツアー本体をロードし、存在しないIDを明示的に失敗させる
+        body: |
+          resolve(scope).loadTour(id)の結果がundefinedなら例外にします。選択から再生までの
+          間にファイルが削除された場合でも、曖昧な空画面にならずcommand層のcatchへ戻ります。
+        anchors:
+          - ref: konstelia.play-tour.load-tour
+            emphasis: primary
+          - ref: konstelia.play-tour.require-tour
+            emphasis: secondary
+      - summary: 同じscopeのアンカーをロードしてplayback.startへ一括で渡す
+        body: |
+          playbackはstorageへ直接アクセスせず、完成したTourDocumentとアンカー配列だけを
+          受け取ります。この境界により、Repository・Workspace・Personalの違いは描画処理へ
+          漏れません。
+        anchors:
+          - ref: konstelia.play-tour.start-playback
+            emphasis: primary
+          - ref: konstelia.play-tour.load-anchors
+            emphasis: secondary
+  - id: prepare-anchors
+    title: 再生前にアンカーを準備する
+    hops:
+      - summary: startは同時に二つのツアーが走ることを禁止する
+        body: |
+          runningフラグを最初に確認し、既存ツアーのhoverや装飾が新しいツアーと競合するのを
+          防ぎます。TourPlayerを作った後でrunningをtrueにし、終了時にはfinallyで戻します。
+        anchors:
+          - ref: konstelia.playback.reject-concurrent
+            emphasis: primary
+          - ref: konstelia.vscode-tour-playback.start
+            emphasis: secondary
+      - summary: startは表示ループへ入る前に全参照アンカーを解決する
+        body: |
+          prepareAnchorsをawaitしてからtourActive contextを有効にします。途中でprimaryが
+          brokenと分かれば表示を一度も開始せず、部分的なツアーを読ませません。
+        anchors:
+          - ref: konstelia.playback.prepare-call
+            emphasis: primary
+          - ref: konstelia.playback.prepare-anchors
+            emphasis: secondary
+      - summary: prepareAnchorsは参照IDを重複排除し、一件ずつ解決結果を保存する
+        body: |
+          全step・hopからrefをSetへ集めます。レジストリに存在しないIDはその場でBrokenとして
+          prepared mapへ記録し、存在するIDはresolveAnchorでVS CodeのRangeへ変換します。
+        anchors:
+          - ref: konstelia.playback.prepare-loop
+            emphasis: primary
+          - ref: konstelia.playback.missing-anchor
+            emphasis: secondary
+          - ref: konstelia.playback.resolve-anchor-call
+            emphasis: secondary
+      - summary: primaryの破損は例外、secondaryの破損は警告として扱う
+        body: |
+          assessTourAnchorsは各参照のemphasisを考慮して判定します。blockingIssuesがあれば
+          詳細付き例外を投げ、warningsだけなら壊れたsecondary IDを通知して再生を続けます。
+        anchors:
+          - ref: konstelia.playback.assess-anchors-call
+            emphasis: primary
+          - ref: konstelia.assess-tour-anchors
+            emphasis: secondary
+          - ref: konstelia.playback.block-primary
+            emphasis: secondary
+          - ref: konstelia.playback.warn-secondary
+            emphasis: secondary
+  - id: render-loop
+    title: ホップをVS Codeへ描画する
+    hops:
+      - summary: startのループは現在位置をrenderへ渡す
+        body: |
+          TourPlayerがplayingの間、getCurrentで現在のhopを取得します。renderの戻り値には
+          popoverの表示先とhop全体のhealthが含まれ、そのhealthをplayerへ反映します。
+        anchors:
+          - ref: konstelia.playback.render-call
+            emphasis: primary
+          - ref: konstelia.playback.render
+            emphasis: secondary
+      - summary: renderは現在のhopで解決済みのアンカーだけを描画対象にする
+        body: |
+          hopのreferenceをprepared mapへ引き当て、targetがないbroken secondaryは
+          スキップします。残ったtargetにはprimaryまたはsecondaryのemphasisを付与します。
+        anchors:
+          - ref: konstelia.playback.collect-render-targets
+            emphasis: primary
+      - summary: ファイルごとにグループ化しprimaryのエディタへフォーカスする
+        body: |
+          secondaryだけのファイルを先に開き、primaryを含むファイルを最後に開きます。
+          showTextDocumentではprimaryならViewColumn.Oneとfocus、secondaryなら横のcolumnと
+          preserveFocusを使い分け、強弱の異なるdecorationを適用します。
+        anchors:
+          - ref: konstelia.playback.show-document
+            emphasis: primary
+          - ref: konstelia.playback.render-groups
+            emphasis: secondary
+      - summary: primaryの表示先を必須とし、hopのhealthを計算して返す
+        body: |
+          primaryが一件も描画できなければエラーにします。表示できた場合も、hop内に
+          healthy以外の参照が一つでもあれば戻り値をDriftedにしてpopoverへ状態を伝えます。
+        anchors:
+          - ref: konstelia.playback.render-health
+            emphasis: primary
+          - ref: konstelia.playback.require-primary
+            emphasis: secondary
+      - summary: popoverの操作をprevious・next・exitの状態遷移へ変換する
+        body: |
+          showPopoverは説明文と利用可能な操作リンクを表示し、Promiseでユーザー操作を待ちます。
+          戻ったactionに応じてTourPlayerだけを操作するため、UIイベントと状態遷移が分離されます。
+        anchors:
+          - ref: konstelia.playback.show-popover
+            emphasis: primary
+          - ref: konstelia.playback.handle-action
+            emphasis: secondary
+      - summary: 正常終了でも例外でもfinallyが表示状態を片付ける
+        body: |
+          hover、decoration、runningフラグ、キーバインド用contextを必ず初期状態へ戻します。
+          これにより途中でファイルが読めなくなっても次のツアーを開始できます。
+        anchors:
+          - ref: konstelia.playback.cleanup
+            emphasis: primary
+  - id: semantic-resolution
+    title: semantic anchorを実コードへ解決する
+    hops:
+      - summary: VS Code層は安全な相対パスをUriとTextDocumentへ変換する
+        body: |
+          resolveAnchorはpath traversalを拒否してworkspace内のUriを作り、TextDocumentの
+          全文をapplication層のResolveAnchorへ渡します。offset rangeは最後にVS Codeの
+          Rangeへ変換され、描画可能なPreparedAnchorになります。
+        anchors:
+          - ref: konstelia.playback.resolve-anchor-method
+            emphasis: primary
+          - ref: konstelia.playback.delegate-anchor-resolution
+            emphasis: secondary
+      - summary: ResolveAnchorは言語アダプターへsymbol-pathとrefinementを渡す
+        body: |
+          コアロジックはTypeScriptやPythonなどの構文を直接知りません。adapter.resolveへ
+          source text、file、symbol、refinementを渡し、共通の成功・失敗形式を受け取ります。
+        anchors:
+          - ref: konstelia.resolve-anchor.adapter-call
+            emphasis: primary
+          - ref: konstelia.resolve-anchor.execute
+            emphasis: secondary
+      - summary: symbol解決後もsnapshotを比較して意味的なずれを検出する
+        body: |
+          symbol-pathが解決しても保存snapshotと現在の対象が違えばHealthyにはしません。
+          snapshotが別の一候補に一致すればその候補をDriftedとして使い、それ以外は
+          symbolのRangeをDriftedとして返します。一致していればHealthyです。
+        anchors:
+          - ref: konstelia.resolve-anchor.symbol-success
+            emphasis: primary
+          - ref: konstelia.resolve-anchor.snapshot-mismatch
+            emphasis: secondary
+      - summary: symbol失敗時はfallbackとsnapshotを試し、最後にBrokenを返す
+        body: |
+          refinementだけが壊れてsymbol全体を示せる場合はfallbackRangeで続行します。
+          symbol自体が壊れてもsnapshot候補が一件なら追従し、どちらも成立しない場合だけ
+          reason付きのBrokenにします。
+        anchors:
+          - ref: konstelia.resolve-anchor.symbol-fallback
+            emphasis: primary
+          - ref: konstelia.resolve-anchor.snapshot-fallback
+            emphasis: secondary
+          - ref: konstelia.resolve-anchor.broken
+            emphasis: secondary
+  - id: player-state-machine
+    title: TourPlayerが状態遷移を管理する
+    hops:
+      - summary: TourPlayerはVS Codeから独立した唯一の再生状態を持つ
+        body: |
+          stateにはtour ID、step index、hop index、health、statusだけを保持します。
+          editorやhoverを持たないため、状態遷移をunit testだけで完全に確認できます。
+        anchors:
+          - ref: konstelia.tour-player
+            emphasis: primary
+      - summary: flattenTourが入れ子のstepとhopを連続したpositionへ変換する
+        body: |
+          二重ループで記述順を保ったままordinalを割り当てます。最後に全positionへtotalを
+          設定するため、前後移動と「現在/総数」の表示はstep境界を意識せず処理できます。
+        anchors:
+          - ref: konstelia.tour-player.flatten
+            emphasis: primary
+      - summary: nextは終了後の操作を無視し、最終hopではcompletedへ遷移する
+        body: |
+          statusがplayingでなければ同じstateを返します。最終ordinalなら位置を進めず
+          completedへ更新し、それ以外だけmoveToOrdinalへ次の番号を渡します。
+        anchors:
+          - ref: konstelia.tour-player.next
+            emphasis: primary
+          - ref: konstelia.tour-player.ignore-after-finish
+            emphasis: secondary
+          - ref: konstelia.tour-player.complete
+            emphasis: secondary
+      - summary: 通常の前進はhealthをリセットし、購読者へ新しいstateを通知する
+        body: |
+          moveToOrdinalは指定位置からplaying・Healthyのstateを作り直します。updateがstateを
+          一度だけ置換し、全listenerへ通知するため、将来の別ビューも同じ状態を投影できます。
+        anchors:
+          - ref: konstelia.tour-player.advance
+            emphasis: primary
+          - ref: konstelia.tour-player.update
+            emphasis: secondary
+          - ref: konstelia.tour-player.notify
+            emphasis: secondary

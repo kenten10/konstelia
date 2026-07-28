@@ -1,0 +1,28 @@
+id: kotlin-order-processing
+title: Kotlin注文処理の流れ
+description: Kotlinのdata classとnullable型を使った注文処理をたどる
+steps:
+  - id: resolve-product
+    title: 商品を解決する
+    hops:
+      - summary: OrderService.createが注文作成を開始する
+        anchors:
+          - ref: kotlin.order-service.create
+            emphasis: primary
+      - summary: Catalogからnullableな商品を取得する
+        anchors:
+          - ref: kotlin.order-service.find
+            emphasis: primary
+          - ref: kotlin.order-service.missing-product
+            emphasis: secondary
+  - id: persist-order
+    title: 注文を保存する
+    hops:
+      - summary: repositoryへdata classのOrderを保存する
+        anchors:
+          - ref: kotlin.order-service.save
+            emphasis: primary
+      - summary: 保存したOrderを呼び出し元へ返す
+        anchors:
+          - ref: kotlin.order-service.return
+            emphasis: primary

@@ -1,0 +1,50 @@
+id: authentication-failure
+title: 認証失敗とロック解除の流れ
+description: 認証失敗の判定、失敗回数の記録、成功時の状態回復を AuthService 内でたどる
+prerequisites:
+  - sample-tour
+steps:
+  - id: reject-locked-account
+    title: ロック済みアカウントの早期拒否
+    hops:
+      - summary: 認証処理は最初に失敗回数を確認する
+        body: |
+          パスワード検証やデータベースアクセスより先にロック状態を確認し、不要な処理を避けます。
+        anchors:
+          - ref: sample.auth-service.lockout-check
+            emphasis: primary
+          - ref: sample.auth-service.attempts
+            emphasis: secondary
+  - id: validate-credentials
+    title: ユーザー検索と資格情報の検証
+    hops:
+      - summary: メールアドレスを使って永続層からユーザーを取得する
+        anchors:
+          - ref: sample.auth-service.lookup-user
+            emphasis: primary
+          - ref: sample.user-repository.find-by-email
+            emphasis: secondary
+      - summary: ユーザーの存在とパスワードを同じ分岐で検証する
+        body: |
+          ユーザーが存在しない場合は短絡評価され、verify は呼び出されません。
+        anchors:
+          - ref: sample.auth-service.credentials-check
+            emphasis: primary
+  - id: update-attempt-state
+    title: 認証結果による状態更新
+    hops:
+      - summary: 認証失敗時はメールアドレス単位の回数を増やす
+        anchors:
+          - ref: sample.auth-service.record-failure
+            emphasis: primary
+          - ref: sample.auth-service.attempts
+            emphasis: secondary
+      - summary: 認証成功時は蓄積した失敗回数を削除する
+        body: |
+          成功したアカウントは次回ログイン時に過去の失敗回数を引き継ぎません。
+        anchors:
+          - ref: sample.auth-service.clear-failures
+            emphasis: primary
+    links:
+      - to: session-token-lifecycle#login-token
+        label: 成功後のトークン発行へ

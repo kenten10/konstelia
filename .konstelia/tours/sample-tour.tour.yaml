@@ -1,0 +1,42 @@
+id: sample-tour
+title: サンプル認証APIの流れ
+description: examples/authentication のコードをたどり、ログイン処理とアカウントロックの仕組みを理解する
+steps:
+  - id: login-flow
+    title: ログインリクエストの流れ
+    hops:
+      - summary: AuthController がログインリクエストを受け取る
+        body: |
+          Controller はリクエストから認証情報を取り出し、検証処理を AuthService に委譲します。
+        anchors:
+          - ref: sample.auth-controller.login
+            emphasis: primary
+      - summary: AuthService が認証処理を一元的に実行する
+        body: |
+          通常のログインとセッション更新は、どちらも同じ authenticate メソッドを通ります。
+        anchors:
+          - ref: sample.auth-service.authenticate
+            emphasis: primary
+          - ref: sample.auth-controller.authenticate-call
+            emphasis: secondary
+          - ref: sample.auth-service.refresh-authenticate-call
+            emphasis: secondary
+      - summary: UserRepository がメールアドレスからユーザーを検索する
+        body: |
+          永続層はメールアドレスの一意性を前提に、該当するユーザーを返します。
+        anchors:
+          - ref: sample.user-repository.find-by-email
+            emphasis: primary
+  - id: account-lockout
+    title: アカウントロックの仕組み
+    hops:
+      - summary: AuthService がメールアドレスごとの認証失敗回数を保持する
+        anchors:
+          - ref: sample.auth-service.attempts
+            emphasis: primary
+      - summary: 認証に3回失敗したアカウントを拒否する
+        body: |
+          authenticate の冒頭で失敗回数を確認し、しきい値に達している場合は認証を続行しません。
+        anchors:
+          - ref: sample.auth-service.lockout-check
+            emphasis: primary

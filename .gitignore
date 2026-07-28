@@ -1,0 +1,47 @@
+# Dependencies and generated output
+node_modules/
+dist/
+.test-dist/
+out/
+coverage/
+*.vsix
+*.tgz
+
+# Environment files and credentials
+.env
+.env.*
+!.env.example
+.npmrc
+.yarnrc
+.netrc
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+id_rsa
+id_ed25519
+credentials*.json
+service-account*.json
+secret*.json
+
+# Editor and operating-system state
+.idea/
+.vscode/*
+!.vscode/launch.json
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.log
+
+# Language caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Locally installed sample tours
+samples/.konstelia/

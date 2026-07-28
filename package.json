@@ -1,0 +1,145 @@
+{
+  "name": "konstelia",
+  "displayName": "Konstelia",
+  "description": "Create and explore source-code tours for shared code understanding.",
+  "version": "0.0.1",
+  "publisher": "konstelia",
+  "private": true,
+  "license": "MIT",
+  "bin": {
+    "tour": "./dist/cli.js"
+  },
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:.konstelia/tours/*.tour.yaml",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:python",
+    "onLanguage:ruby",
+    "onLanguage:rust",
+    "onLanguage:go",
+    "onLanguage:swift",
+    "onLanguage:java",
+    "onLanguage:csharp",
+    "onLanguage:c",
+    "onLanguage:cpp",
+    "onLanguage:kotlin",
+    "onCommand:konstelia.createTour",
+    "onCommand:konstelia.createAnchor",
+    "onCommand:konstelia.repairAnchor",
+    "onCommand:konstelia.discoverAnchorRepairs",
+    "onCommand:konstelia.browseTours",
+    "onCommand:konstelia.playTour",
+    "onCommand:konstelia.playSampleTour",
+    "onCommand:konstelia.installSampleTours"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "konstelia.createTour",
+        "title": "Create Tour",
+        "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.createAnchor",
+        "title": "Create Anchor from Selection",
+        "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.repairAnchor",
+        "title": "Repair Anchor from Selection",
+        "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.discoverAnchorRepairs",
+        "title": "Repair Anchor Automatically",
+        "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.browseTours",
+        "title": "Browse Tours",
+        "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.playTour",
+        "title": "Play Tour",
+        "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.playSampleTour",
+        "title": "Play Sample Tour",
+        "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.installSampleTours",
+        "title": "Install Sample Tours",
+        "category": "Konstelia"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "konstelia.playback.next",
+        "key": "alt+right",
+        "when": "konstelia.tourActive && konstelia.tourCanNext"
+      },
+      {
+        "command": "konstelia.playback.blockedNext",
+        "key": "alt+right",
+        "when": "konstelia.tourActive && !konstelia.tourCanNext"
+      },
+      {
+        "command": "konstelia.playback.previous",
+        "key": "alt+left",
+        "when": "konstelia.tourActive && konstelia.tourCanPrevious"
+      },
+      {
+        "command": "konstelia.playback.blockedPrevious",
+        "key": "alt+left",
+        "when": "konstelia.tourActive && !konstelia.tourCanPrevious"
+      }
+    ]
+  },
+  "scripts": {
+    "clean": "rimraf dist .test-dist",
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -w -p tsconfig.json",
+    "lint": "eslint src test",
+    "test:compile": "tsc -p tsconfig.test.json",
+    "test": "npm run test:compile && node --test .test-dist/test/*.test.js",
+    "tour": "npm run compile --silent && node dist/cli.js",
+    "check:public": "node scripts/check-public-repository.mjs --history",
+    "hooks:install": "node scripts/install-git-hooks.mjs",
+    "prepare": "npm run hooks:install",
+    "validate": "npm run compile && npm run lint && npm test && npm run check:public",
+    "vscode:prepublish": "npm run compile",
+    "extension:package": "vsce package --out konstelia.vsix",
+    "extension:install": "npm run extension:package && code --install-extension konstelia.vsix --force"
+  },
+  "dependencies": {
+    "@lezer/common": "^1.5.2",
+    "@lezer/cpp": "^1.1.6",
+    "@lezer/go": "^1.0.1",
+    "@lezer/java": "^1.1.3",
+    "@lezer/javascript": "^1.5.4",
+    "@lezer/python": "^1.1.19",
+    "@lezer/rust": "^1.0.2",
+    "typescript": "^5.7.3",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "@types/vscode": "1.96.0",
+    "@vscode/vsce": "^3.9.2",
+    "eslint": "^9.20.0",
+    "rimraf": "^6.0.1",
+    "typescript-eslint": "^8.24.0"
+  }
+}

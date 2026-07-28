@@ -1,0 +1,28 @@
+id: c-order-processing
+title: C注文処理の流れ
+description: Cの関数ポインタと出力領域を使った注文処理をたどる
+steps:
+  - id: resolve-product
+    title: 商品を解決する
+    hops:
+      - summary: create_order関数が注文作成を開始する
+        anchors:
+          - ref: c.order-service.create
+            emphasis: primary
+      - summary: 関数ポインタを通して商品を検索する
+        anchors:
+          - ref: c.order-service.find
+            emphasis: primary
+          - ref: c.order-service.missing-product
+            emphasis: secondary
+  - id: persist-order
+    title: 注文を保存する
+    hops:
+      - summary: repository_saveへ出力領域を渡す
+        anchors:
+          - ref: c.order-service.save
+            emphasis: primary
+      - summary: 呼び出し元が用意したOrderを返す
+        anchors:
+          - ref: c.order-service.return
+            emphasis: primary

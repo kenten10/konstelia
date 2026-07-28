@@ -1,0 +1,28 @@
+id: rust-order-processing
+title: Rust注文処理の流れ
+description: Rustのtrait境界と所有権を保った注文生成の流れをたどる
+steps:
+  - id: resolve-product
+    title: 商品を解決する
+    hops:
+      - summary: OrderService::createが注文作成を開始する
+        anchors:
+          - ref: rust.order-service.create
+            emphasis: primary
+      - summary: Catalog traitを通して商品を検索する
+        anchors:
+          - ref: rust.order-service.find
+            emphasis: primary
+          - ref: rust.order-service.missing-product
+            emphasis: secondary
+  - id: persist-order
+    title: 注文を保存する
+    hops:
+      - summary: repositoryへOrderの参照を渡して保存する
+        anchors:
+          - ref: rust.order-service.save
+            emphasis: primary
+      - summary: 所有しているOrderを呼び出し元へ返す
+        anchors:
+          - ref: rust.order-service.return
+            emphasis: primary

@@ -1,0 +1,48 @@
+id: python-order-processing
+title: Python注文処理の流れ
+description: Pythonで実装された商品検索、決済、注文保存の責務をたどる
+steps:
+  - id: create-order
+    title: 注文を組み立てる
+    hops:
+      - summary: OrderServiceが注文作成処理を開始する
+        body: |
+          ユースケースの入口は依存サービスを協調させ、注文作成全体を管理します。
+        anchors:
+          - ref: python.order-service.create-order
+            emphasis: primary
+      - summary: ProductCatalogから対象商品を取得する
+        body: |
+          商品データの取得方法をサービスから分離し、catalogの抽象へ委譲します。
+        anchors:
+          - ref: python.order-service.product-lookup
+            emphasis: primary
+          - ref: python.catalog.find-by-id
+            emphasis: secondary
+      - summary: 存在しない商品を早期に拒否する
+        body: |
+          後続の決済へ進む前に、商品が存在することを保証します。
+        anchors:
+          - ref: python.order-service.missing-product
+            emphasis: primary
+  - id: persist-order
+    title: 決済して注文を保存する
+    hops:
+      - summary: 合計金額をPaymentGatewayへ渡す
+        body: |
+          決済結果のIDは、作成する注文と支払いを関連付けるために保存されます。
+        anchors:
+          - ref: python.order-service.charge
+            emphasis: primary
+      - summary: 組み立てた注文をrepositoryへ保存する
+        body: |
+          永続化の詳細はOrderRepositoryの実装に閉じ込められています。
+        anchors:
+          - ref: python.order-service.save
+            emphasis: primary
+          - ref: python.order-repository.save
+            emphasis: secondary
+      - summary: 保存済みの注文を呼び出し元へ返す
+        anchors:
+          - ref: python.order-service.return
+            emphasis: primary

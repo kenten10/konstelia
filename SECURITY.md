@@ -1,0 +1,7 @@
+# Security
+
+セキュリティ上の問題は公開Issueへ詳細を書かず、GitHubのPrivate vulnerability reportingから
+報告してください。機密情報を含まない一般的な改善提案は通常のIssueで受け付けます。
+
+リポジトリはpush前とCIで、認証情報らしいファイル、秘密鍵、主要サービスのtoken形式、
+生成物、5 MiBを超えるファイルを検査します。誤検知や追加すべき検査規則はIssueで報告してください。

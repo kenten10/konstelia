@@ -1,0 +1,496 @@
+anchors:
+  - id: sample.auth-controller.login
+    file: examples/authentication/authController.ts
+    symbol: AuthController.login
+  - id: sample.auth-service.authenticate
+    file: examples/authentication/authService.ts
+    symbol: AuthService.authenticate
+  - id: sample.auth-controller.authenticate-call
+    file: examples/authentication/authController.ts
+    symbol: AuthController.login
+    refinement: call(authenticate)[0]
+  - id: sample.auth-service.refresh-authenticate-call
+    file: examples/authentication/authService.ts
+    symbol: AuthService.refreshSession
+    refinement: call(authenticate)[0]
+  - id: sample.user-repository.find-by-email
+    file: examples/authentication/userRepository.ts
+    symbol: UserRepository.findByEmail
+  - id: sample.auth-service.attempts
+    file: examples/authentication/authService.ts
+    symbol: AuthService.attempts
+  - id: sample.auth-service.lockout-check
+    file: examples/authentication/authService.ts
+    symbol: AuthService.authenticate
+    refinement: if[0]
+  - id: sample.auth-controller.issue-token-call
+    file: examples/authentication/authController.ts
+    symbol: AuthController.login.token
+    refinement: call(issueToken)[0]
+  - id: sample.auth-controller.logout
+    file: examples/authentication/authController.ts
+    symbol: AuthController.logout
+  - id: sample.auth-controller.revoke-call
+    file: examples/authentication/authController.ts
+    symbol: AuthController.logout
+    refinement: call(revoke)[0]
+  - id: sample.auth-service.lookup-user
+    file: examples/authentication/authService.ts
+    symbol: AuthService.authenticate
+    refinement: call(findByEmail)[0]
+  - id: sample.auth-service.credentials-check
+    file: examples/authentication/authService.ts
+    symbol: AuthService.authenticate
+    refinement: if[1]
+  - id: sample.auth-service.record-failure
+    file: examples/authentication/authService.ts
+    symbol: AuthService.authenticate
+    refinement: call(set)[0]
+  - id: sample.auth-service.clear-failures
+    file: examples/authentication/authService.ts
+    symbol: AuthService.authenticate
+    refinement: call(delete)[0]
+  - id: sample.auth-service.refresh-session
+    file: examples/authentication/authService.ts
+    symbol: AuthService.refreshSession
+  - id: sample.auth-service.issue-token
+    file: examples/authentication/authService.ts
+    symbol: AuthService.issueToken
+  - id: sample.auth-service.sign-token
+    file: examples/authentication/authService.ts
+    symbol: AuthService.issueToken
+    refinement: call(sign)[0]
+  - id: sample.auth-service.revoke
+    file: examples/authentication/authService.ts
+    symbol: AuthService.revoke
+  - id: sample.user-model
+    file: examples/authentication/userRepository.ts
+    symbol: User
+  - id: sample.user-repository.query-one
+    file: examples/authentication/userRepository.ts
+    symbol: UserRepository.findByEmail
+    refinement: call(queryOne)[0]
+  - id: python.order-service.create-order
+    file: examples/python/order_service.py
+    symbol: OrderService.create_order
+  - id: python.order-service.product-lookup
+    file: examples/python/order_service.py
+    symbol: OrderService.create_order
+    refinement: call(find_by_id)[0]
+  - id: python.order-service.missing-product
+    file: examples/python/order_service.py
+    symbol: OrderService.create_order
+    refinement: if[0]
+  - id: python.order-service.charge
+    file: examples/python/order_service.py
+    symbol: OrderService.create_order
+    refinement: call(charge)[0]
+  - id: python.order-service.save
+    file: examples/python/order_service.py
+    symbol: OrderService.create_order
+    refinement: call(save)[0]
+  - id: python.order-service.return
+    file: examples/python/order_service.py
+    symbol: OrderService.create_order
+    refinement: return[0]
+  - id: python.catalog.find-by-id
+    file: examples/python/repositories.py
+    symbol: InMemoryProductCatalog.find_by_id
+  - id: python.order-repository.save
+    file: examples/python/repositories.py
+    symbol: InMemoryOrderRepository.save
+  - id: javascript.order-service.create
+    file: examples/languages/javascript/orderService.js
+    symbol: OrderService.create
+  - id: javascript.order-service.find
+    file: examples/languages/javascript/orderService.js
+    symbol: OrderService.create
+    refinement: call(find)[0]
+  - id: javascript.order-service.missing-product
+    file: examples/languages/javascript/orderService.js
+    symbol: OrderService.create
+    refinement: if[0]
+  - id: javascript.order-service.save
+    file: examples/languages/javascript/orderService.js
+    symbol: OrderService.create
+    refinement: call(save)[0]
+  - id: javascript.order-service.return
+    file: examples/languages/javascript/orderService.js
+    symbol: OrderService.create
+    refinement: return[0]
+  - id: ruby.order-service.create
+    file: examples/languages/ruby/order_service.rb
+    symbol: OrderService.create
+  - id: ruby.order-service.find
+    file: examples/languages/ruby/order_service.rb
+    symbol: OrderService.create
+    refinement: call(find)[0]
+  - id: ruby.order-service.missing-product
+    file: examples/languages/ruby/order_service.rb
+    symbol: OrderService.create
+    refinement: if[0]
+  - id: ruby.order-service.save
+    file: examples/languages/ruby/order_service.rb
+    symbol: OrderService.create
+    refinement: call(save)[0]
+  - id: ruby.order-service.return
+    file: examples/languages/ruby/order_service.rb
+    symbol: OrderService.create
+    refinement: return[0]
+  - id: rust.order-service.create
+    file: examples/languages/rust/order_service.rs
+    symbol: OrderService.create
+  - id: rust.order-service.find
+    file: examples/languages/rust/order_service.rs
+    symbol: OrderService.create
+    refinement: call(find)[0]
+  - id: rust.order-service.missing-product
+    file: examples/languages/rust/order_service.rs
+    symbol: OrderService.create
+    refinement: if[0]
+  - id: rust.order-service.save
+    file: examples/languages/rust/order_service.rs
+    symbol: OrderService.create
+    refinement: call(save)[0]
+  - id: rust.order-service.return
+    file: examples/languages/rust/order_service.rs
+    symbol: OrderService.create
+    refinement: return[0]
+  - id: go.order-service.create
+    file: examples/languages/go/order_service.go
+    symbol: OrderService.Create
+  - id: go.order-service.find
+    file: examples/languages/go/order_service.go
+    symbol: OrderService.Create
+    refinement: call(Find)[0]
+  - id: go.order-service.missing-product
+    file: examples/languages/go/order_service.go
+    symbol: OrderService.Create
+    refinement: if[0]
+  - id: go.order-service.save
+    file: examples/languages/go/order_service.go
+    symbol: OrderService.Create
+    refinement: call(Save)[0]
+  - id: go.order-service.return
+    file: examples/languages/go/order_service.go
+    symbol: OrderService.Create
+    refinement: return[0]
+  - id: swift.order-service.create
+    file: examples/languages/swift/OrderService.swift
+    symbol: OrderService.create
+  - id: swift.order-service.find
+    file: examples/languages/swift/OrderService.swift
+    symbol: OrderService.create
+    refinement: call(find)[0]
+  - id: swift.order-service.missing-product
+    file: examples/languages/swift/OrderService.swift
+    symbol: OrderService.create
+    refinement: if[0]
+  - id: swift.order-service.save
+    file: examples/languages/swift/OrderService.swift
+    symbol: OrderService.create
+    refinement: call(save)[0]
+  - id: swift.order-service.return
+    file: examples/languages/swift/OrderService.swift
+    symbol: OrderService.create
+    refinement: return[0]
+  - id: java.order-service.create
+    file: examples/languages/java/OrderService.java
+    symbol: OrderService.create
+  - id: java.order-service.find
+    file: examples/languages/java/OrderService.java
+    symbol: OrderService.create
+    refinement: call(find)[0]
+  - id: java.order-service.missing-product
+    file: examples/languages/java/OrderService.java
+    symbol: OrderService.create
+    refinement: if[0]
+  - id: java.order-service.save
+    file: examples/languages/java/OrderService.java
+    symbol: OrderService.create
+    refinement: call(save)[0]
+  - id: java.order-service.return
+    file: examples/languages/java/OrderService.java
+    symbol: OrderService.create
+    refinement: return[0]
+  - id: csharp.order-service.create
+    file: examples/languages/csharp/OrderService.cs
+    symbol: OrderService.Create
+  - id: csharp.order-service.find
+    file: examples/languages/csharp/OrderService.cs
+    symbol: OrderService.Create
+    refinement: call(Find)[0]
+  - id: csharp.order-service.missing-product
+    file: examples/languages/csharp/OrderService.cs
+    symbol: OrderService.Create
+    refinement: if[0]
+  - id: csharp.order-service.save
+    file: examples/languages/csharp/OrderService.cs
+    symbol: OrderService.Create
+    refinement: call(Save)[0]
+  - id: csharp.order-service.return
+    file: examples/languages/csharp/OrderService.cs
+    symbol: OrderService.Create
+    refinement: return[0]
+  - id: c.order-service.create
+    file: examples/languages/c/order_service.c
+    symbol: create_order
+  - id: c.order-service.find
+    file: examples/languages/c/order_service.c
+    symbol: create_order
+    refinement: call(catalog_find)[0]
+  - id: c.order-service.missing-product
+    file: examples/languages/c/order_service.c
+    symbol: create_order
+    refinement: if[0]
+  - id: c.order-service.save
+    file: examples/languages/c/order_service.c
+    symbol: create_order
+    refinement: call(repository_save)[0]
+  - id: c.order-service.return
+    file: examples/languages/c/order_service.c
+    symbol: create_order
+    refinement: return[1]
+  - id: cpp.order-service.create
+    file: examples/languages/cpp/order_service.cpp
+    symbol: OrderService.create
+  - id: cpp.order-service.find
+    file: examples/languages/cpp/order_service.cpp
+    symbol: OrderService.create
+    refinement: call(find)[0]
+  - id: cpp.order-service.missing-product
+    file: examples/languages/cpp/order_service.cpp
+    symbol: OrderService.create
+    refinement: if[0]
+  - id: cpp.order-service.save
+    file: examples/languages/cpp/order_service.cpp
+    symbol: OrderService.create
+    refinement: call(save)[0]
+  - id: cpp.order-service.return
+    file: examples/languages/cpp/order_service.cpp
+    symbol: OrderService.create
+    refinement: return[0]
+  - id: kotlin.order-service.create
+    file: examples/languages/kotlin/OrderService.kt
+    symbol: OrderService.create
+  - id: kotlin.order-service.find
+    file: examples/languages/kotlin/OrderService.kt
+    symbol: OrderService.create
+    refinement: call(find)[0]
+  - id: kotlin.order-service.missing-product
+    file: examples/languages/kotlin/OrderService.kt
+    symbol: OrderService.create
+    refinement: if[0]
+  - id: kotlin.order-service.save
+    file: examples/languages/kotlin/OrderService.kt
+    symbol: OrderService.create
+    refinement: call(save)[0]
+  - id: kotlin.order-service.return
+    file: examples/languages/kotlin/OrderService.kt
+    symbol: OrderService.create
+    refinement: return[0]
+  - id: konstelia.play-tour-command.execute
+    file: src/presentation/commands/PlayTourCommand.ts
+    symbol: PlayTourCommand.execute
+  - id: konstelia.list-tours-with-health.execute
+    file: src/application/tours/ListToursWithHealth.ts
+    symbol: ListToursWithHealth.execute
+  - id: konstelia.play-tour.execute
+    file: src/application/tours/PlayTour.ts
+    symbol: PlayTour.execute
+  - id: konstelia.vscode-tour-playback.start
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.start
+  - id: konstelia.resolve-anchor.execute
+    file: src/application/anchors/ResolveAnchor.ts
+    symbol: ResolveAnchor.execute
+  - id: konstelia.assess-tour-anchors
+    file: src/application/tours/AssessTourAnchors.ts
+    symbol: assessTourAnchors
+  - id: konstelia.tour-player
+    file: src/application/tours/TourPlayer.ts
+    symbol: TourPlayer
+  - id: konstelia.play-tour-command.choose-scope
+    file: src/presentation/commands/PlayTourCommand.ts
+    symbol: PlayTourCommand.execute
+    refinement: call(chooseScope)[0]
+  - id: konstelia.play-tour-command.list-with-health
+    file: src/presentation/commands/PlayTourCommand.ts
+    symbol: PlayTourCommand.execute
+    refinement: call(execute)[1]
+  - id: konstelia.play-tour-command.ensure-binding
+    file: src/presentation/commands/PlayTourCommand.ts
+    symbol: PlayTourCommand.execute
+    refinement: call(ensurePersonalSourceBinding)[0]
+  - id: konstelia.play-tour-command.block-broken
+    file: src/presentation/commands/PlayTourCommand.ts
+    symbol: PlayTourCommand.execute
+    refinement: if[5]
+  - id: konstelia.play-tour-command.delegate-play
+    file: src/presentation/commands/PlayTourCommand.ts
+    symbol: PlayTourCommand.execute
+    refinement: call(execute)[3]
+  - id: konstelia.list-health.scan-tours
+    file: src/application/tours/ListToursWithHealth.ts
+    symbol: ListToursWithHealth.execute
+    refinement: call(scanTours)[0]
+  - id: konstelia.list-health.load-anchors
+    file: src/application/tours/ListToursWithHealth.ts
+    symbol: ListToursWithHealth.execute
+    refinement: call(loadAnchors)[0]
+  - id: konstelia.list-health.validate
+    file: src/application/tours/ListToursWithHealth.ts
+    symbol: ListToursWithHealth.execute
+    refinement: call(execute)[0]
+  - id: konstelia.list-health.summarize
+    file: src/application/tours/ListToursWithHealth.ts
+    symbol: ListToursWithHealth.execute
+    refinement: return[0]
+  - id: konstelia.play-tour.load-tour
+    file: src/application/tours/PlayTour.ts
+    symbol: PlayTour.execute
+    refinement: call(loadTour)[0]
+  - id: konstelia.play-tour.require-tour
+    file: src/application/tours/PlayTour.ts
+    symbol: PlayTour.execute
+    refinement: if[0]
+  - id: konstelia.play-tour.load-anchors
+    file: src/application/tours/PlayTour.ts
+    symbol: PlayTour.execute
+    refinement: call(loadAnchors)[0]
+  - id: konstelia.play-tour.start-playback
+    file: src/application/tours/PlayTour.ts
+    symbol: PlayTour.execute
+    refinement: call(start)[0]
+  - id: konstelia.playback.reject-concurrent
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.start
+    refinement: if[0]
+  - id: konstelia.playback.prepare-call
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.start
+    refinement: call(prepareAnchors)[0]
+  - id: konstelia.playback.prepare-anchors
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.prepareAnchors
+  - id: konstelia.playback.prepare-loop
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.prepareAnchors
+    refinement: for[0]
+  - id: konstelia.playback.missing-anchor
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.prepareAnchors
+    refinement: if[0]
+  - id: konstelia.playback.resolve-anchor-call
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.prepareAnchors
+    refinement: call(resolveAnchor)[0]
+  - id: konstelia.playback.assess-anchors-call
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.prepareAnchors
+    refinement: call(assessTourAnchors)[0]
+  - id: konstelia.playback.block-primary
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.prepareAnchors
+    refinement: if[1]
+  - id: konstelia.playback.warn-secondary
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.prepareAnchors
+    refinement: if[2]
+  - id: konstelia.playback.render-call
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.start
+    refinement: call(render)[0]
+  - id: konstelia.playback.render
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.render
+  - id: konstelia.playback.collect-render-targets
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.render
+    refinement: for[0]
+  - id: konstelia.playback.render-groups
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.render
+    refinement: for[1]
+  - id: konstelia.playback.show-document
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.render
+    refinement: call(showTextDocument)[0]
+  - id: konstelia.playback.require-primary
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.render
+    refinement: if[3]
+  - id: konstelia.playback.render-health
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.render
+    refinement: return[0]
+  - id: konstelia.playback.show-popover
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.start
+    refinement: call(showPopover)[0]
+  - id: konstelia.playback.handle-action
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.start
+    refinement: if[2]
+  - id: konstelia.playback.cleanup
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.start
+    refinement: call(clearDecorations)[0]
+  - id: konstelia.playback.resolve-anchor-method
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.resolveAnchor
+  - id: konstelia.playback.delegate-anchor-resolution
+    file: src/presentation/playback/VsCodeTourPlayback.ts
+    symbol: VsCodeTourPlayback.resolveAnchor
+    refinement: call(execute)[0]
+  - id: konstelia.resolve-anchor.adapter-call
+    file: src/application/anchors/ResolveAnchor.ts
+    symbol: ResolveAnchor.execute
+    refinement: call(resolve)[0]
+  - id: konstelia.resolve-anchor.symbol-success
+    file: src/application/anchors/ResolveAnchor.ts
+    symbol: ResolveAnchor.execute
+    refinement: if[0]
+  - id: konstelia.resolve-anchor.snapshot-mismatch
+    file: src/application/anchors/ResolveAnchor.ts
+    symbol: ResolveAnchor.execute
+    refinement: if[2]
+  - id: konstelia.resolve-anchor.symbol-fallback
+    file: src/application/anchors/ResolveAnchor.ts
+    symbol: ResolveAnchor.execute
+    refinement: if[4]
+  - id: konstelia.resolve-anchor.snapshot-fallback
+    file: src/application/anchors/ResolveAnchor.ts
+    symbol: ResolveAnchor.execute
+    refinement: if[5]
+  - id: konstelia.resolve-anchor.broken
+    file: src/application/anchors/ResolveAnchor.ts
+    symbol: ResolveAnchor.execute
+    refinement: return[5]
+  - id: konstelia.tour-player.flatten
+    file: src/application/tours/TourPlayer.ts
+    symbol: flattenTour
+    refinement: for[0]
+  - id: konstelia.tour-player.next
+    file: src/application/tours/TourPlayer.ts
+    symbol: TourPlayer.next
+  - id: konstelia.tour-player.ignore-after-finish
+    file: src/application/tours/TourPlayer.ts
+    symbol: TourPlayer.next
+    refinement: if[0]
+  - id: konstelia.tour-player.complete
+    file: src/application/tours/TourPlayer.ts
+    symbol: TourPlayer.next
+    refinement: if[1]
+  - id: konstelia.tour-player.advance
+    file: src/application/tours/TourPlayer.ts
+    symbol: TourPlayer.next
+    refinement: call(moveToOrdinal)[0]
+  - id: konstelia.tour-player.update
+    file: src/application/tours/TourPlayer.ts
+    symbol: TourPlayer.moveToOrdinal
+    refinement: call(update)[0]
+  - id: konstelia.tour-player.notify
+    file: src/application/tours/TourPlayer.ts
+    symbol: TourPlayer.update
+    refinement: for[0]

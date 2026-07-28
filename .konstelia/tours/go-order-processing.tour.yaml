@@ -1,0 +1,28 @@
+id: go-order-processing
+title: Go注文処理の流れ
+description: Goのinterfaceとreceiver methodで構成された注文処理をたどる
+steps:
+  - id: resolve-product
+    title: 商品を解決する
+    hops:
+      - summary: OrderServiceのreceiver methodが注文作成を開始する
+        anchors:
+          - ref: go.order-service.create
+            emphasis: primary
+      - summary: Catalog interfaceを通して商品を検索する
+        anchors:
+          - ref: go.order-service.find
+            emphasis: primary
+          - ref: go.order-service.missing-product
+            emphasis: secondary
+  - id: persist-order
+    title: 注文を保存する
+    hops:
+      - summary: repositoryへ値としてOrderを渡す
+        anchors:
+          - ref: go.order-service.save
+            emphasis: primary
+      - summary: 作成したOrderを呼び出し元へ返す
+        anchors:
+          - ref: go.order-service.return
+            emphasis: primary

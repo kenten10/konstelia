@@ -1,0 +1,28 @@
+id: cpp-order-processing
+title: C++注文処理の流れ
+description: C++の抽象クラスとvalue objectを使った注文処理をたどる
+steps:
+  - id: resolve-product
+    title: 商品を解決する
+    hops:
+      - summary: OrderService::createが注文作成を開始する
+        anchors:
+          - ref: cpp.order-service.create
+            emphasis: primary
+      - summary: Catalogからoptionalな商品を取得する
+        anchors:
+          - ref: cpp.order-service.find
+            emphasis: primary
+          - ref: cpp.order-service.missing-product
+            emphasis: secondary
+  - id: persist-order
+    title: 注文を保存する
+    hops:
+      - summary: repositoryへOrderのconst referenceを渡す
+        anchors:
+          - ref: cpp.order-service.save
+            emphasis: primary
+      - summary: 作成したOrderを値として返す
+        anchors:
+          - ref: cpp.order-service.return
+            emphasis: primary

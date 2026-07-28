@@ -1,0 +1,23 @@
+{
+  "name": "code-tour-spike",
+  "displayName": "Code Tour Spike ②: Spotlight",
+  "description": "ディム+スポットライト+ホップ遷移の体感検証用スケルトン",
+  "version": "0.0.1",
+  "publisher": "kenten",
+  "engines": { "vscode": "^1.85.0" },
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      { "command": "codeTourSpike.start", "title": "Code Tour Spike: Start Sample Tour" },
+      { "command": "codeTourSpike.exit", "title": "Code Tour Spike: Exit Tour" },
+      { "command": "codeTourSpike.next", "title": "Code Tour Spike: Next Hop" },
+      { "command": "codeTourSpike.prev", "title": "Code Tour Spike: Prev Hop" }
+    ],
+    "keybindings": [
+      { "command": "codeTourSpike.next", "key": "alt+right", "when": "codeTourSpike.active" },
+      { "command": "codeTourSpike.prev", "key": "alt+left", "when": "codeTourSpike.active" },
+      { "command": "codeTourSpike.exit", "key": "escape", "when": "codeTourSpike.active && !suggestWidgetVisible" }
+    ]
+  }
+}

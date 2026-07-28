@@ -1,0 +1,28 @@
+id: javascript-order-processing
+title: JavaScript注文処理の流れ
+description: JavaScriptの動的なオブジェクト構築と依存サービスの協調をたどる
+steps:
+  - id: resolve-product
+    title: 商品を解決する
+    hops:
+      - summary: OrderServiceが注文作成を開始する
+        anchors:
+          - ref: javascript.order-service.create
+            emphasis: primary
+      - summary: catalogから商品を検索して存在を確認する
+        anchors:
+          - ref: javascript.order-service.find
+            emphasis: primary
+          - ref: javascript.order-service.missing-product
+            emphasis: secondary
+  - id: persist-order
+    title: 注文を保存する
+    hops:
+      - summary: repositoryへ組み立てた注文を保存する
+        anchors:
+          - ref: javascript.order-service.save
+            emphasis: primary
+      - summary: 保存した注文を呼び出し元へ返す
+        anchors:
+          - ref: javascript.order-service.return
+            emphasis: primary

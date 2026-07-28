@@ -1,0 +1,28 @@
+id: csharp-order-processing
+title: C#注文処理の流れ
+description: C#のrecordとinterfaceを使った注文処理をたどる
+steps:
+  - id: resolve-product
+    title: 商品を解決する
+    hops:
+      - summary: OrderService.Createが注文作成を開始する
+        anchors:
+          - ref: csharp.order-service.create
+            emphasis: primary
+      - summary: ICatalogからnullableな商品を取得する
+        anchors:
+          - ref: csharp.order-service.find
+            emphasis: primary
+          - ref: csharp.order-service.missing-product
+            emphasis: secondary
+  - id: persist-order
+    title: 注文を保存する
+    hops:
+      - summary: repositoryへ生成したOrderを保存する
+        anchors:
+          - ref: csharp.order-service.save
+            emphasis: primary
+      - summary: 保存したOrderを呼び出し元へ返す
+        anchors:
+          - ref: csharp.order-service.return
+            emphasis: primary

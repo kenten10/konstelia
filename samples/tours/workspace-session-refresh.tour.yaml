@@ -1,0 +1,31 @@
+id: workspace-session-refresh
+title: "ワークスペース用サンプル: セッション更新"
+description: 現在のワークスペースだけで共有する調査として、セッション更新と再認証をたどる
+steps:
+  - id: refresh-entry
+    title: 更新処理へ入る
+    hops:
+      - summary: refreshSessionがキャッシュ済みの秘密情報を受け取る
+        anchors:
+          - ref: sample.auth-service.refresh-session
+            emphasis: primary
+  - id: reuse-authentication
+    title: 共通の認証処理を再利用する
+    hops:
+      - summary: セッション更新もauthenticateを呼び出す
+        body: |
+          通常ログインと同じロック判定、ユーザー検索、資格情報検証を再利用します。
+        anchors:
+          - ref: sample.auth-service.refresh-authenticate-call
+            emphasis: primary
+          - ref: sample.auth-service.authenticate
+            emphasis: secondary
+  - id: issue-refreshed-token
+    title: 新しいトークンを返す
+    hops:
+      - summary: 再認証に成功した場合だけ新しいトークンを発行する
+        anchors:
+          - ref: sample.auth-service.refresh-session
+            emphasis: primary
+          - ref: sample.auth-service.issue-token
+            emphasis: secondary

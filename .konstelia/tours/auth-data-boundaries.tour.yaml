@@ -1,0 +1,44 @@
+id: auth-data-boundaries
+title: 認証機能のデータ境界
+description: HTTP入力、サービスのプリミティブ値、永続層のUserモデルという境界を確認する
+steps:
+  - id: http-boundary
+    title: HTTPからアプリケーションサービスへ
+    hops:
+      - summary: Controller がRequestから認証情報を取り出す
+        body: |
+          HTTP固有のRequestとResponseはControllerに留まり、Serviceにはemailとpasswordだけを渡します。
+        anchors:
+          - ref: sample.auth-controller.login
+            emphasis: primary
+          - ref: sample.auth-service.authenticate
+            emphasis: secondary
+  - id: service-boundary
+    title: ServiceからRepositoryへ
+    hops:
+      - summary: Serviceはメールアドレスでユーザー検索を要求する
+        anchors:
+          - ref: sample.auth-service.lookup-user
+            emphasis: primary
+          - ref: sample.user-repository.find-by-email
+            emphasis: secondary
+      - summary: RepositoryはUserまたはnullを返す契約を持つ
+        anchors:
+          - ref: sample.user-repository.find-by-email
+            emphasis: primary
+          - ref: sample.user-model
+            emphasis: secondary
+  - id: persistence-boundary
+    title: Repositoryからデータベースへ
+    hops:
+      - summary: SQLとデータベースAPIはRepository内に閉じ込める
+        body: |
+          ServiceはSQLを知らず、RepositoryがqueryOneの結果をUserモデルとして公開します。
+        anchors:
+          - ref: sample.user-repository.query-one
+            emphasis: primary
+          - ref: sample.user-model
+            emphasis: secondary
+    links:
+      - to: authentication-failure#validate-credentials
+        label: 取得したユーザーの検証へ

@@ -1,0 +1,30 @@
+id: personal-auth-debugging
+title: "個人用サンプル: 認証失敗のデバッグ"
+description: 自分だけの調査メモとして、ログイン失敗からアカウントロックまでを短くたどる
+steps:
+  - id: inspect-login-input
+    title: ログイン入力を確認する
+    hops:
+      - summary: Controllerがリクエストから認証情報を取り出す
+        body: |
+          個人調査の出発点として、HTTP入力がServiceへ渡る直前を確認します。
+        anchors:
+          - ref: sample.auth-controller.login
+            emphasis: primary
+          - ref: sample.auth-controller.authenticate-call
+            emphasis: secondary
+  - id: inspect-failure-state
+    title: 失敗状態を確認する
+    hops:
+      - summary: 資格情報の検証に失敗すると回数を加算する
+        anchors:
+          - ref: sample.auth-service.credentials-check
+            emphasis: primary
+          - ref: sample.auth-service.record-failure
+            emphasis: secondary
+      - summary: 失敗が3回に達すると後続処理を行わず拒否する
+        anchors:
+          - ref: sample.auth-service.lockout-check
+            emphasis: primary
+          - ref: sample.auth-service.attempts
+            emphasis: secondary

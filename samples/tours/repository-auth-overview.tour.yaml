@@ -1,0 +1,29 @@
+id: repository-auth-overview
+title: "リポジトリ用サンプル: 認証レイヤー概要"
+description: チーム共有用の入口として、Controller、Service、Repositoryの責務を横断する
+steps:
+  - id: controller
+    title: HTTP境界
+    hops:
+      - summary: AuthControllerがHTTPリクエストをアプリケーション入力へ変換する
+        anchors:
+          - ref: sample.auth-controller.login
+            emphasis: primary
+  - id: service
+    title: 認証ルール
+    hops:
+      - summary: AuthServiceがロック判定と資格情報検証を一元化する
+        anchors:
+          - ref: sample.auth-service.authenticate
+            emphasis: primary
+          - ref: sample.auth-service.lockout-check
+            emphasis: secondary
+  - id: repository
+    title: 永続化境界
+    hops:
+      - summary: UserRepositoryがメールアドレスによるユーザー検索を担当する
+        anchors:
+          - ref: sample.user-repository.find-by-email
+            emphasis: primary
+          - ref: sample.user-model
+            emphasis: secondary

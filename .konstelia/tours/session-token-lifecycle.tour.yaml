@@ -1,0 +1,56 @@
+id: session-token-lifecycle
+title: セッションとトークンのライフサイクル
+description: ログイン時の発行、セッション更新、ログアウト時の失効をたどる
+prerequisites:
+  - sample-tour
+steps:
+  - id: login-token
+    title: ログイン成功時のトークン発行
+    hops:
+      - summary: Controller は認証成功後にトークン発行を依頼する
+        anchors:
+          - ref: sample.auth-controller.issue-token-call
+            emphasis: primary
+          - ref: sample.auth-service.issue-token
+            emphasis: secondary
+      - summary: AuthService はメールアドレスと発行時刻を署名する
+        body: |
+          トークンの subject にメールアドレスを設定し、現在時刻を issued-at として含めます。
+        anchors:
+          - ref: sample.auth-service.sign-token
+            emphasis: primary
+  - id: refresh-token
+    title: セッション更新時の再認証
+    hops:
+      - summary: セッション更新も共通の authenticate を通る
+        body: |
+          キャッシュ済みの秘密情報を使いますが、ロックや資格情報検証の規則は通常ログインと共通です。
+        anchors:
+          - ref: sample.auth-service.refresh-authenticate-call
+            emphasis: primary
+          - ref: sample.auth-service.authenticate
+            emphasis: secondary
+      - summary: 再認証に成功した場合だけ新しいトークンを発行する
+        anchors:
+          - ref: sample.auth-service.refresh-session
+            emphasis: primary
+          - ref: sample.auth-service.issue-token
+            emphasis: secondary
+  - id: logout-token
+    title: ログアウト時のトークン失効
+    hops:
+      - summary: Controller は受け取ったトークンの失効をServiceへ委譲する
+        anchors:
+          - ref: sample.auth-controller.revoke-call
+            emphasis: primary
+          - ref: sample.auth-service.revoke
+            emphasis: secondary
+      - summary: 失効処理の契約は非同期で副作用だけを返す
+        body: |
+          現在のサンプルでは実装が省略されており、将来の失効リストやストレージ連携の境界になっています。
+        anchors:
+          - ref: sample.auth-service.revoke
+            emphasis: primary
+    links:
+      - to: sample-tour#login-flow
+        label: ログイン処理の全体像へ戻る

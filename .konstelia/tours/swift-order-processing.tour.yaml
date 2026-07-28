@@ -1,0 +1,28 @@
+id: swift-order-processing
+title: Swift注文処理の流れ
+description: Swiftのprotocol、optional、throwを使った注文処理をたどる
+steps:
+  - id: resolve-product
+    title: 商品を解決する
+    hops:
+      - summary: OrderService.createが注文作成を開始する
+        anchors:
+          - ref: swift.order-service.create
+            emphasis: primary
+      - summary: Catalog protocolからoptionalな商品を取得する
+        anchors:
+          - ref: swift.order-service.find
+            emphasis: primary
+          - ref: swift.order-service.missing-product
+            emphasis: secondary
+  - id: persist-order
+    title: 注文を保存する
+    hops:
+      - summary: repositoryへ生成したOrderを保存する
+        anchors:
+          - ref: swift.order-service.save
+            emphasis: primary
+      - summary: 保存したOrderを呼び出し元へ返す
+        anchors:
+          - ref: swift.order-service.return
+            emphasis: primary
