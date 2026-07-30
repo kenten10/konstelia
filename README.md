@@ -4,6 +4,9 @@ Konsteliaは、ソースコード上の意味のある場所を順番にたど�
 
 現在はMVPです。TypeScript/TSX、JavaScript/JSX、Python、Ruby、Rust、Go、Swift、Java、C#、C、C++、Kotlin、単一ルートのワークスペース、YAMLによるツアー編集、Personal・Workspace・Repositoryの3スコープに対応しています。専用のツアー編集画面、フローダイアグラム、同期、AI機能にはまだ対応していません。
 
+- GitHub: [kenten10/konstelia](https://github.com/kenten10/konstelia)
+- 不具合・改善要望: [GitHub Issues](https://github.com/kenten10/konstelia/issues)
+
 ## リポジトリ構成
 
 ```text
@@ -260,5 +263,5 @@ npm run validate  # compile、lint、test、公開前検査をまとめて実行
 
 ## ライセンス
 
-Konsteliaは`LICENSE`に記載したMIT Licenseで公開しています。実行時依存のライセンスと
-配布時の通知については`THIRD_PARTY_NOTICES.md`を参照してください。
+Konsteliaは[MIT License](LICENSE)で公開しています。実行時依存のライセンスと
+配布時の通知については[Third-Party Notices](THIRD_PARTY_NOTICES.md)を参照してください。
