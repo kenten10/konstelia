@@ -5,6 +5,7 @@ dist/
 out/
 coverage/
 *.vsix
+*.vsix.sha256
 *.tgz
 
 # Environment files and credentials
