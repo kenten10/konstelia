@@ -22,6 +22,36 @@ test/        Node.jsで実行するunit test
 
 ## VS Codeへインストールする
 
+### GitHub Releaseからインストールする
+
+必要な環境はVS Code 1.96以降です。[最新のRelease](https://github.com/kenten10/konstelia/releases/latest)から`konstelia.vsix`と`konstelia.vsix.sha256`をダウンロードするか、macOS・Linuxでは次を実行します。
+
+```bash
+curl -LO https://github.com/kenten10/konstelia/releases/latest/download/konstelia.vsix
+curl -LO https://github.com/kenten10/konstelia/releases/latest/download/konstelia.vsix.sha256
+shasum -a 256 -c konstelia.vsix.sha256
+code --install-extension konstelia.vsix --force
+```
+
+Windows PowerShellでは、次の値が`konstelia.vsix.sha256`の先頭の値と一致することを確認してからインストールします。
+
+```powershell
+(Get-FileHash .\konstelia.vsix -Algorithm SHA256).Hash.ToLower()
+code --install-extension .\konstelia.vsix --force
+```
+
+VS CodeのExtensionsビューにある「Views and More Actions (`...`)」→「Install from VSIX...」から`konstelia.vsix`を選択することもできます。インストール後にVS Codeを再読み込みし、このリポジトリを開いてコマンドパレットから`Konstelia: Play Sample Tour`を実行してください。
+
+現在のMVPは単一ルートのワークスペースを対象とします。`Konstelia: Install Sample Tours`は参照ソースを保証するため、同梱Konstelia workspaceでのみインストールを続行します。
+
+アンインストールする場合はExtensionsビューからKonsteliaを削除するか、次を実行します。
+
+```bash
+code --uninstall-extension konstelia.konstelia
+```
+
+### ソースからインストールする
+
 必要な環境はNode.js 20以降、npm、VS Code 1.96以降です。リポジトリのルートで次を実行すると、配布可能な`konstelia.vsix`を作成して現在のVS Codeへインストールします。
 
 ```bash
@@ -35,7 +65,11 @@ VSIXの作成だけを行う場合は次を実行します。
 npm run extension:package
 ```
 
-作成した`konstelia.vsix`は、VS CodeのExtensionsビューにある「Views and More Actions (`...`)」→「Install from VSIX...」から選択してインストールすることもできます。インストール後にVS Codeを再読み込みし、コマンドパレットから`Konstelia: Play Sample Tour`を実行してください。
+Release用のVSIXとSHA-256 checksumをまとめて作成する場合は次を実行します。
+
+```bash
+npm run extension:release
+```
 
 ## 最初に試す
 

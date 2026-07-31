@@ -132,6 +132,8 @@
     "validate": "npm run compile && npm run lint && npm test && npm run check:public",
     "vscode:prepublish": "npm run compile",
     "extension:package": "vsce package --out konstelia.vsix",
+    "extension:checksum": "node scripts/create-vsix-checksum.mjs",
+    "extension:release": "npm run extension:package && npm run extension:checksum",
     "extension:install": "npm run extension:package && code --install-extension konstelia.vsix --force"
   },
   "dependencies": {

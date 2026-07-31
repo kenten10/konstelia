@@ -16,6 +16,7 @@ python-sample/**
 samples/.konstelia/**
 scripts/**
 tsconfig*.json
+*.vsix.sha256
 
 dist/**/*.map
 node_modules/**
