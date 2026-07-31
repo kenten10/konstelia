@@ -18,3 +18,16 @@ scripts/**
 tsconfig*.json
 
 dist/**/*.map
+node_modules/**
+!node_modules/@lezer/common/LICENSE
+!node_modules/@lezer/cpp/LICENSE
+!node_modules/@lezer/go/LICENSE
+!node_modules/@lezer/highlight/LICENSE
+!node_modules/@lezer/java/LICENSE
+!node_modules/@lezer/javascript/LICENSE
+!node_modules/@lezer/lr/LICENSE
+!node_modules/@lezer/python/LICENSE
+!node_modules/@lezer/rust/LICENSE
+!node_modules/typescript/LICENSE.txt
+!node_modules/typescript/ThirdPartyNoticeText.txt
+!node_modules/yaml/LICENSE

@@ -246,7 +246,7 @@ ProblemsビューのKonstelia診断を確認してください。無効なツア
 ## 開発と検証
 
 ```bash
-npm run compile   # dist/へTypeScriptをビルド
+npm run compile   # 型検査し、dist/へVS Code拡張とCLIをバンドル
 npm run lint      # src/とtest/へESLintを実行
 npm test          # テスト用にコンパイルしNode.jsのunit testを実行
 npm run check:public # 公開不可ファイルと秘密情報をGit履歴まで検査
