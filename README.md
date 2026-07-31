@@ -1,5 +1,7 @@
 # Konstelia
 
+[English](README.en.md) | 日本語
+
 Konsteliaは、ソースコード上の意味のある場所を順番にたどる「コードツアー」を作成・再生するVS Code拡張です。ファイルの行番号ではなく、言語ごとのsymbol-pathと構造的なrefinementを使ってコードを特定します。そのため、コードの移動や軽微な編集があっても、アンカーを再解決したり修復候補を探したりできます。
 
 現在はMVPです。TypeScript/TSX、JavaScript/JSX、Python、Ruby、Rust、Go、Swift、Java、C#、C、C++、Kotlin、単一ルートのワークスペース、YAMLによるツアー編集、Personal・Workspace・Repositoryの3スコープに対応しています。専用のツアー編集画面、フローダイアグラム、同期、AI機能にはまだ対応していません。
