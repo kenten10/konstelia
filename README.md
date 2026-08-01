@@ -49,7 +49,7 @@ VS CodeのExtensionsビューにある「Views and More Actions (`...`)」→「
 アンインストールする場合はExtensionsビューからKonsteliaを削除するか、次を実行します。
 
 ```bash
-code --uninstall-extension konstelia.konstelia
+code --uninstall-extension kenten10.konstelia
 ```
 
 ### ソースからインストールする

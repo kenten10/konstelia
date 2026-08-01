@@ -49,7 +49,7 @@ The current MVP targets single-root workspaces. To guarantee that referenced sou
 To uninstall Konstelia, remove it from the Extensions view or run:
 
 ```bash
-code --uninstall-extension konstelia.konstelia
+code --uninstall-extension kenten10.konstelia
 ```
 
 ### Install from source
