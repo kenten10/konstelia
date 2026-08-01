@@ -4,10 +4,39 @@ English | [日本語](README.md)
 
 Konstelia is a VS Code extension for creating and playing "code tours" that guide readers through meaningful locations in source code. Instead of relying on file line numbers, it locates code using language-specific symbol paths and structural refinements. This allows Konstelia to resolve anchors again or find repair candidates even after code is moved or lightly edited.
 
-Konstelia is currently an MVP. It supports TypeScript/TSX, JavaScript/JSX, Python, Ruby, Rust, Go, Swift, Java, C#, C, C++, and Kotlin; single-root workspaces; YAML-based tour editing; and Personal, Workspace, and Repository scopes. A dedicated tour editor, flow diagrams, synchronization, and AI features are not yet available.
+[View on the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=kenten10.konstelia) · [GitHub](https://github.com/kenten10/konstelia) · [Bugs and feature requests](https://github.com/kenten10/konstelia/issues)
 
-- GitHub: [kenten10/konstelia](https://github.com/kenten10/konstelia)
-- Bugs and feature requests: [GitHub Issues](https://github.com/kenten10/konstelia/issues)
+## 30-second demo
+
+![A 30-second demo of Konstelia playing the sample authentication API code tour](media/konstelia-demo.gif)
+
+Move between hops with `Alt+Right` / `Alt+Left`. Konstelia opens the related files and shows the target code and explanation together.
+
+## Why Konstelia helps
+
+- **Tours survive code movement** — Konstelia locates code by symbol path and structure instead of line number, and suggests repair candidates when an anchor drifts.
+- **Share the “why,” not just the “where”** — Explain the order of a flow across multiple files and show what readers should notice beside the relevant code.
+- **Store tours at the right scope** — Keep a tour personal, attach it to the current workspace, or share it with the team through Git.
+- **Catch stale guidance early** — Tours are evaluated as `healthy`, `drifted`, or `broken`, and Repository tours can also be validated from the CLI.
+
+## Try it in 3 minutes
+
+All you need is VS Code 1.96 or later.
+
+1. Install Konstelia from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=kenten10.konstelia).
+2. Reload VS Code and open the Command Palette with `Cmd+Shift+P` or `Ctrl+Shift+P`.
+3. Run **Konstelia: Play Sample Tour**.
+4. Use `Alt+Right` to move forward, `Alt+Left` to move back, and **End Tour** in the popover to finish.
+
+If you cannot use the Marketplace, download `konstelia.vsix` from the [latest GitHub Release](https://github.com/kenten10/konstelia/releases/latest), then choose **Views and More Actions (`...`)** > **Install from VSIX...** in the Extensions view.
+
+## Actual screenshot
+
+![Konstelia highlighting related authentication API code in two editors with an explanatory popover](media/konstelia-tour.png)
+
+This example shows the primary anchor in the center and a supporting secondary anchor in the adjacent editor. The explanation, current hop, navigation, and exit action stay visible beside the code.
+
+Konstelia is currently an MVP. It supports TypeScript/TSX, JavaScript/JSX, Python, Ruby, Rust, Go, Swift, Java, C#, C, C++, and Kotlin; single-root workspaces; YAML-based tour editing; and Personal, Workspace, and Repository scopes. A dedicated tour editor, flow diagrams, synchronization, and AI features are not yet available.
 
 ## Repository layout
 
@@ -22,7 +51,11 @@ src/         Extension and CLI product code
 test/        Unit tests run with Node.js
 ```
 
-## Install in VS Code
+## Installation
+
+### Install from the VS Code Marketplace
+
+Select **Install** on the [Konstelia Marketplace page](https://marketplace.visualstudio.com/items?itemName=kenten10.konstelia). After installation, reload VS Code and run **Konstelia: Play Sample Tour** from the Command Palette.
 
 ### Install from a GitHub Release
 
@@ -73,7 +106,7 @@ To create both the release VSIX and its SHA-256 checksum, run:
 npm run extension:release
 ```
 
-## Try it first
+## Try it from source
 
 Node.js 20 or later, npm, and VS Code 1.96 or later are required.
 
@@ -261,7 +294,27 @@ Use **Konstelia: Browse Tours** to choose a scope and open a saved tour YAML fil
 | **Konstelia: Play Sample Tour** | Directly play the bundled Repository sample |
 | **Konstelia: Install Sample Tours** | Idempotently install samples into all three scopes |
 
-## Troubleshooting
+## FAQ
+
+### Will adding or moving lines break a tour?
+
+Konstelia does not rely on line numbers alone. It resolves targets using language-specific symbol paths, structural refinements, and snapshots. If it cannot follow a change completely, it reports the anchor as `drifted` or `broken`, and you can repair it from a selection or through automatic discovery.
+
+### Which languages are supported?
+
+Konstelia supports TypeScript/TSX, JavaScript/JSX, Python, Ruby, Rust, Go, Swift, Java, C#, C, C++, and Kotlin. The exact selection granularity available for fields, properties, and other constructs varies by language adapter.
+
+### Can I share tours with my team?
+
+Yes. Repository scope stores YAML under `.konstelia/`, so tours and anchors can be reviewed and shared through Git alongside the source code. Personal and Workspace scopes do not write to the repository.
+
+### Is there a dedicated tour editor?
+
+In the current MVP, commands create tours and anchors, while tour content is edited as YAML. Konstelia provides diagnostics on save, and Repository tours can also be checked with `npm run tour -- validate`.
+
+### Are multi-root workspaces supported?
+
+The current implementation targets single-root workspaces. Explicit repository selection in a multi-root workspace is not yet supported.
 
 ### A Personal tour appears broken in another workspace
 

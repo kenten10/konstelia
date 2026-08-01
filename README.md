@@ -4,10 +4,39 @@
 
 Konsteliaは、ソースコード上の意味のある場所を順番にたどる「コードツアー」を作成・再生するVS Code拡張です。ファイルの行番号ではなく、言語ごとのsymbol-pathと構造的なrefinementを使ってコードを特定します。そのため、コードの移動や軽微な編集があっても、アンカーを再解決したり修復候補を探したりできます。
 
-現在はMVPです。TypeScript/TSX、JavaScript/JSX、Python、Ruby、Rust、Go、Swift、Java、C#、C、C++、Kotlin、単一ルートのワークスペース、YAMLによるツアー編集、Personal・Workspace・Repositoryの3スコープに対応しています。専用のツアー編集画面、フローダイアグラム、同期、AI機能にはまだ対応していません。
+[VS Code Marketplaceで見る](https://marketplace.visualstudio.com/items?itemName=kenten10.konstelia) · [GitHub](https://github.com/kenten10/konstelia) · [不具合・改善要望](https://github.com/kenten10/konstelia/issues)
 
-- GitHub: [kenten10/konstelia](https://github.com/kenten10/konstelia)
-- 不具合・改善要望: [GitHub Issues](https://github.com/kenten10/konstelia/issues)
+## 30秒デモ
+
+![Konsteliaでサンプル認証APIのコードツアーを再生する30秒デモ](media/konstelia-demo.gif)
+
+`Alt+Right` / `Alt+Left`でホップを移動すると、関連するファイルが開き、対象コードと説明が同じ画面に表示されます。
+
+## 何が嬉しいか
+
+- **コードが動いてもツアーが長持ちする** — 行番号ではなくsymbol-pathと構造で場所を特定し、ずれたアンカーには修復候補を提示します。
+- **「どこ」だけでなく「なぜ」も共有できる** — 複数ファイルをまたぐ処理の順序と、各地点で読むべき説明をコードのそばに表示します。
+- **用途に合った範囲で保存できる** — 個人用、現在のワークスペース用、Gitでチーム共有するRepository用を選べます。
+- **壊れた案内に早く気づける** — ツアーを`healthy`、`drifted`、`broken`で評価し、RepositoryツアーはCLIでも検証できます。
+
+## 3分で試せる Quick Start
+
+必要なのはVS Code 1.96以降だけです。
+
+1. [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=kenten10.konstelia)からKonsteliaをインストールします。
+2. VS Codeを再読み込みし、コマンドパレット（`Cmd+Shift+P` / `Ctrl+Shift+P`）を開きます。
+3. **Konstelia: Play Sample Tour**を実行します。
+4. `Alt+Right`で次へ、`Alt+Left`で前へ進み、ポップオーバーの**終了**でツアーを閉じます。
+
+Marketplaceを利用できない場合は、[最新のGitHub Release](https://github.com/kenten10/konstelia/releases/latest)から`konstelia.vsix`を入手し、Extensionsビューの「Views and More Actions (`...`)」→「Install from VSIX...」でインストールできます。
+
+## 実際のスクリーンショット
+
+![Konsteliaが認証APIの関連コードを2つのエディターで強調し、説明ポップオーバーを表示している画面](media/konstelia-tour.png)
+
+primaryアンカーを中央に、補助的なsecondaryアンカーを隣のエディターに表示した例です。説明、現在のホップ、前後移動と終了の操作をコードから目を離さず確認できます。
+
+現在はMVPです。TypeScript/TSX、JavaScript/JSX、Python、Ruby、Rust、Go、Swift、Java、C#、C、C++、Kotlin、単一ルートのワークスペース、YAMLによるツアー編集、Personal・Workspace・Repositoryの3スコープに対応しています。専用のツアー編集画面、フローダイアグラム、同期、AI機能にはまだ対応していません。
 
 ## リポジトリ構成
 
@@ -22,7 +51,11 @@ src/         拡張機能とCLIの製品コード
 test/        Node.jsで実行するunit test
 ```
 
-## VS Codeへインストールする
+## インストール
+
+### VS Code Marketplaceからインストールする
+
+[KonsteliaのMarketplaceページ](https://marketplace.visualstudio.com/items?itemName=kenten10.konstelia)で**Install**を選びます。インストール後にVS Codeを再読み込みし、コマンドパレットから**Konstelia: Play Sample Tour**を実行してください。
 
 ### GitHub Releaseからインストールする
 
@@ -73,7 +106,7 @@ Release用のVSIXとSHA-256 checksumをまとめて作成する場合は次を�
 npm run extension:release
 ```
 
-## 最初に試す
+## ソースから試す
 
 必要な環境はNode.js 20以降、npm、VS Code 1.96以降です。
 
@@ -253,7 +286,7 @@ Workspaceスコープはフォルダーまたはworkspaceを開いている場�
 | コマンド | 用途 |
 | --- | --- |
 | **Konstelia: Create Tour** | 最小のツアーYAMLを作成する |
-| **Konstelia: Create Anchor from Selection** | TypeScript/TSX/Pythonの選択からアンカーを作成する |
+| **Konstelia: Create Anchor from Selection** | 対応言語の選択範囲からアンカーを作成する |
 | **Konstelia: Repair Anchor from Selection** | 選択範囲へ既存アンカーを再bindingする |
 | **Konstelia: Repair Anchor Automatically** | ワークスペースから修復候補を探索する |
 | **Konstelia: Browse Tours** | 保存済みツアーYAMLを開く |
@@ -261,7 +294,27 @@ Workspaceスコープはフォルダーまたはworkspaceを開いている場�
 | **Konstelia: Play Sample Tour** | 同梱Repositoryサンプルを直接再生する |
 | **Konstelia: Install Sample Tours** | 3スコープへサンプルを冪等に導入する |
 
-## トラブルシュート
+## FAQ
+
+### 行の追加や移動でツアーは壊れませんか？
+
+行番号だけには依存していません。Konsteliaは言語ごとのsymbol-path、構造的なrefinement、snapshotを使って対象を再解決します。完全に追従できない場合も`drifted`または`broken`として検出し、選択範囲または自動探索からアンカーを修復できます。
+
+### 対応言語は何ですか？
+
+TypeScript/TSX、JavaScript/JSX、Python、Ruby、Rust、Go、Swift、Java、C#、C、C++、Kotlinに対応しています。field/propertyなど、選択範囲を直接symbol化できる粒度は言語アダプターによって異なります。
+
+### ツアーをチームで共有できますか？
+
+はい。Repositoryスコープを選ぶと`.konstelia/`配下へYAMLとして保存され、ソースコードと一緒にGitで共有できます。PersonalとWorkspaceスコープはリポジトリへ書き込みません。
+
+### ツアーの作成に専用エディターはありますか？
+
+現在のMVPでは、コマンドでツアーとアンカーを作成し、ツアーの内容はYAMLで編集します。保存時の診断に加え、Repositoryスコープは`npm run tour -- validate`でも検証できます。
+
+### multi-root workspaceに対応していますか？
+
+現在は単一ルートのワークスペースが対象です。multi-rootでの明示的なrepository選択にはまだ対応していません。
 
 ### Personal tourが別workspaceでbrokenに見える
 
@@ -269,7 +322,7 @@ Workspaceスコープはフォルダーまたはworkspaceを開いている場�
 
 ### 自動修復候補が見つからない
 
-対象がTypeScript/TSX/Pythonであること、先頭のworkspace root内にあること、アンカーにsnapshotが保存されていることを確認してください。候補が得られない場合は、対象コードを選択して**Repair Anchor from Selection**を使えます。
+対象が対応言語のファイルであること、先頭のworkspace root内にあること、アンカーにsnapshotが保存されていることを確認してください。候補が得られない場合は、対象コードを選択して**Repair Anchor from Selection**を使えます。
 
 ### RepositoryまたはWorkspaceスコープが使えない
 
