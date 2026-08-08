@@ -15,6 +15,12 @@ export interface TourHealthSummary extends TourSummary {
   readonly reasons: readonly string[];
 }
 
+/** A listed tour whose health may not have been assessed yet, as for unbound personal tours. */
+export interface MaybeHealthyTourSummary extends TourSummary {
+  readonly health?: AnchorHealth;
+  readonly reasons?: readonly string[];
+}
+
 export interface TourHealthLister {
   execute(scope: TourScope): Promise<TourHealthSummary[]>;
 }

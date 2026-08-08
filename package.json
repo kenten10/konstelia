@@ -44,6 +44,9 @@
     "onCommand:konstelia.repairAnchor",
     "onCommand:konstelia.discoverAnchorRepairs",
     "onCommand:konstelia.browseTours",
+    "onCommand:konstelia.editTour",
+    "onCommand:konstelia.showFlowDiagram",
+    "onWebviewPanel:konstelia.tourEditor",
     "onCommand:konstelia.playTour",
     "onCommand:konstelia.playSampleTour",
     "onCommand:konstelia.installSampleTours"
@@ -77,6 +80,16 @@
         "category": "Konstelia"
       },
       {
+        "command": "konstelia.editTour",
+        "title": "Edit Tour",
+        "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.showFlowDiagram",
+        "title": "Show Flow Diagram",
+        "category": "Konstelia"
+      },
+      {
         "command": "konstelia.playTour",
         "title": "Play Tour",
         "category": "Konstelia"
@@ -92,6 +105,24 @@
         "category": "Konstelia"
       }
     ],
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "konstelia",
+          "title": "Konstelia",
+          "icon": "media/konstelia-flow.svg"
+        }
+      ]
+    },
+    "views": {
+      "konstelia": [
+        {
+          "id": "konstelia.flowDiagram",
+          "name": "Flow Diagram",
+          "type": "webview"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "konstelia.playback.next",

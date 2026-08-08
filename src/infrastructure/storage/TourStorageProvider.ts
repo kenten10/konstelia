@@ -24,6 +24,7 @@ export interface StoredTourFile {
 export interface TourStorageProvider {
   readonly scope: TourScope;
   saveTour(tour: TourDocument): Promise<TourLocation>;
+  updateTour(tour: TourDocument): Promise<TourLocation>;
   loadTour(id: string): Promise<TourDocument | undefined>;
   listTours(): Promise<TourSummary[]>;
   scanTours(): Promise<StoredTourFile[]>;

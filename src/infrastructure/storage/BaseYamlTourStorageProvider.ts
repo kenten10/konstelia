@@ -1,4 +1,5 @@
 import type { Uri } from "vscode";
+import { randomUUID } from "node:crypto";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import type { TourScope } from "../../domain/tour/TourScope";
 import { FileKind, type FileSystem } from "../filesystem/FileSystem";
@@ -20,12 +21,43 @@ export abstract class BaseYamlTourStorageProvider implements TourStorageProvider
 
   protected constructor(protected readonly fileSystem: FileSystem) {}
 
-  public async saveTour(tour: TourDocument): Promise<TourLocation> {
-    const directory = await this.getToursDirectory();
-    await this.fileSystem.createDirectory(directory);
-    const uri = await findUniqueTourUri(this.fileSystem, directory, tour.id);
-    await this.fileSystem.writeFile(uri, serializeTour(tour));
-    return { scope: this.scope, uri, documentUri: uri };
+  private writeQueue: Promise<void> = Promise.resolve();
+
+  public saveTour(tour: TourDocument): Promise<TourLocation> {
+    return this.runExclusive(async () => {
+      const directory = await this.getToursDirectory();
+      await this.fileSystem.createDirectory(directory);
+      const uri = await findUniqueTourUri(this.fileSystem, directory, tour.id);
+      await this.fileSystem.writeFile(uri, serializeTour(tour));
+      return { scope: this.scope, uri, documentUri: uri };
+    });
+  }
+
+  public updateTour(tour: TourDocument): Promise<TourLocation> {
+    return this.runExclusive(async () => {
+      const files = await this.scanTours();
+      const match = files.find((file) => file.tour?.id === tour.id);
+      if (!match) {
+        throw new Error(`Tour '${tour.id}' does not exist in ${this.scope} storage.`);
+      }
+      const target = match.location.uri;
+      const directory = await this.getToursDirectory();
+      const temporary = this.fileSystem.joinPath(directory, `.tour.${randomUUID()}.tmp`);
+      try {
+        await this.fileSystem.writeFile(temporary, serializeTour(tour));
+        await this.fileSystem.renameFile(temporary, target, true);
+      } catch (error) {
+        try {
+          if (await this.fileSystem.exists(temporary)) {
+            await this.fileSystem.deleteFile(temporary);
+          }
+        } catch {
+          // Preserve the original write error.
+        }
+        throw error;
+      }
+      return match.location;
+    });
   }
 
   public async loadTour(id: string): Promise<TourDocument | undefined> {
@@ -81,4 +113,10 @@ export abstract class BaseYamlTourStorageProvider implements TourStorageProvider
 
   protected abstract getToursDirectory(): Promise<Uri>;
 
+  /** Serializes writes the way the anchor registry does, so two saves cannot interleave. */
+  private runExclusive<T>(operation: () => Promise<T>): Promise<T> {
+    const current = this.writeQueue.then(operation, operation);
+    this.writeQueue = current.then(() => undefined, () => undefined);
+    return current;
+  }
 }

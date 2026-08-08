@@ -1,4 +1,7 @@
-import type { TourHealthLister } from "../../application/tours/ListToursWithHealth";
+import type {
+  MaybeHealthyTourSummary,
+  TourHealthLister,
+} from "../../application/tours/ListToursWithHealth";
 import type { PlayTourUseCase } from "../../application/tours/PlayTour";
 import type { TourLister } from "../../application/tours/ListTours";
 import type {
@@ -8,7 +11,6 @@ import type {
 import { AnchorHealth } from "../../domain/tour/TourAnchor";
 import { TourScope } from "../../domain/tour/TourScope";
 import type { Logger } from "../../shared/logging/Logger";
-import type { TourSummary } from "../../infrastructure/storage/TourStorageProvider";
 
 export interface PlayTourScopeChoice {
   label: string;
@@ -29,10 +31,7 @@ export interface PlayTourUserInterface {
   showError(message: string): Promise<void>;
 }
 
-export interface PlayableTourSummary extends TourSummary {
-  readonly health?: AnchorHealth;
-  readonly reasons?: readonly string[];
-}
+export type PlayableTourSummary = MaybeHealthyTourSummary;
 
 const scopeChoices: readonly PlayTourScopeChoice[] = [
   { label: "Personal", description: "Private tours for this VS Code user", scope: TourScope.Personal },

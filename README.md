@@ -36,7 +36,7 @@ Marketplaceを利用できない場合は、[最新のGitHub Release](https://gi
 
 primaryアンカーを中央に、補助的なsecondaryアンカーを隣のエディターに表示した例です。説明、現在のホップ、前後移動と終了の操作をコードから目を離さず確認できます。
 
-現在はMVPです。TypeScript/TSX、JavaScript/JSX、Python、Ruby、Rust、Go、Swift、Java、C#、C、C++、Kotlin、単一ルートのワークスペース、YAMLによるツアー編集、Personal・Workspace・Repositoryの3スコープに対応しています。専用のツアー編集画面、フローダイアグラム、同期、AI機能にはまだ対応していません。
+現在はMVPです。TypeScript/TSX、JavaScript/JSX、Python、Ruby、Rust、Go、Swift、Java、C#、C、C++、Kotlin、単一ルートのワークスペース、YAMLと専用編集画面によるツアー編集、ツアーから自動生成するフロー図、Personal・Workspace・Repositoryの3スコープに対応しています。同期、AI機能、遷移アニメーションにはまだ対応していません。
 
 ## リポジトリ構成
 
@@ -216,7 +216,9 @@ steps:
 - `ref`は同じスコープの`anchors.yaml`に存在するIDを指定します。
 - step IDは同一ツアー内で一意にします。
 
-`prerequisites`と`links`もスキーマ検証されますが、リンクを使った対話的なstep移動は未実装です。現在はホップを記述順に再生します。
+`prerequisites`と`links`もスキーマ検証されます。`links`はフロー図に表示しますが、リンクを使った対話的なstep移動は未実装です。現在はホップを記述順に再生します。
+
+YAMLを直接書く代わりに、**Konstelia: Edit Tour**の編集画面から同じ内容を編集することもできます。
 
 ### 4. YAMLとhealthを確認する
 
@@ -277,6 +279,37 @@ Personal tourのbindingは絶対パスをYAMLへ保存せず、VS Codeのユー�
 
 Workspaceスコープはフォルダーまたはworkspaceを開いている場合だけ利用できます。現在の実装は単一ルートを対象とし、multi-rootの明示的なrepository選択にはまだ対応していません。
 
+## 編集画面でツアーを編集する
+
+**Konstelia: Edit Tour**を実行し、スコープとツアーを選ぶと、専用の編集画面が開きます。YAMLを直接書かずに次の操作ができます。
+
+- タイトル、説明、`prerequisites`の編集
+- ステップとホップの追加、削除、並べ替え
+- ホップの`summary`と`body`の編集
+- アンカー参照の追加と削除（同じスコープの`anchors.yaml`にあるIDを補完します）
+- `emphasis`の切り替え（`primary`を選ぶと同じホップの他のアンカーは自動で`secondary`になります）
+- クロスリンク（`tourId#stepId`）の編集
+
+編集内容はYAML保存前に検証します。スキーマ違反、存在しないアンカーID、壊れたリンク、重複したstep ID、循環したprerequisiteがある場合は保存せず、画面下部の検証結果に理由を表示します。検証を通ると元のツアーファイルへ上書き保存し、診断を更新します。ファイル名は変わりません。ツアーidはファイル名と対応するため、編集画面では変更できません。
+
+未保存の変更があるとタブ名の先頭に`●`が付き、保存ボタンの横に状態を表示します。`Cmd+S` / `Ctrl+S`でも保存できます。
+
+保存するとKonsteliaがYAMLを生成し直すため、**ファイル内のコメント、空行、スキーマ外のキーは失われます**。それらを保ちたいツアーはYAMLを直接編集してください。
+
+右側にはフロー図を自動生成して表示し、編集のたびに更新します。ノードを選ぶと該当ホップの入力欄へ移動します。
+
+## フロー図を見る
+
+**Konstelia: Show Flow Diagram**を実行すると、パネル領域のKonsteliaビューにツアーのフロー図を表示します。一覧では**Konstelia: Play Tour**と同じようにhealthを表示し、修復が必要なツアーには⚠を付けます。図はツアーから自動生成します。
+
+- ステップごとにレーンを作り、ホップを順番に並べます。
+- 同じステップ内の遷移は実線、ステップをまたぐ遷移は破線で結びます。
+- クロスリンクはステップの下にチップとして表示します（表示のみで、選んでも移動しません）。
+- アンカーのhealthをノードの色で示します。driftedは警告色、brokenとレジストリ未定義はエラー色です。判定は一覧表示やCLIと同じ検証経路を使います。
+- ノードを選ぶと、そのホップのsummary、body、アンカーを図の下に表示します。
+
+ツアー再生中は、このビューが`TourPlayer`の状態を購読して現在のホップを強調します。再生中にノードを選ぶとそのホップへ移動し、エディター側の表示も追従します。図はビューであり、状態を持ちません。
+
 ## ツアーファイルを開く
 
 **Konstelia: Browse Tours**を使うと、スコープを選んで保存済みツアーYAMLを開けます。UIコードは保存パスを組み立てず、選択した`TourScope`をstorage resolverへ渡します。
@@ -290,6 +323,8 @@ Workspaceスコープはフォルダーまたはworkspaceを開いている場�
 | **Konstelia: Repair Anchor from Selection** | 選択範囲へ既存アンカーを再bindingする |
 | **Konstelia: Repair Anchor Automatically** | ワークスペースから修復候補を探索する |
 | **Konstelia: Browse Tours** | 保存済みツアーYAMLを開く |
+| **Konstelia: Edit Tour** | 専用の編集画面でツアーを編集する |
+| **Konstelia: Show Flow Diagram** | ツアーのフロー図をパネルに表示する |
 | **Konstelia: Play Tour** | スコープとツアーを選んで再生する |
 | **Konstelia: Play Sample Tour** | 同梱Repositoryサンプルを直接再生する |
 | **Konstelia: Install Sample Tours** | 3スコープへサンプルを冪等に導入する |
@@ -310,7 +345,7 @@ TypeScript/TSX、JavaScript/JSX、Python、Ruby、Rust、Go、Swift、Java、C#�
 
 ### ツアーの作成に専用エディターはありますか？
 
-現在のMVPでは、コマンドでツアーとアンカーを作成し、ツアーの内容はYAMLで編集します。保存時の診断に加え、Repositoryスコープは`npm run tour -- validate`でも検証できます。
+あります。**Konstelia: Edit Tour**でステップ、ホップ、アンカー参照、クロスリンクをフォームから編集でき、フロー図も同時に確認できます。YAMLを直接編集することもでき、どちらの場合も同じ検証ルールが適用されます。保存時の診断に加え、Repositoryスコープは`npm run tour -- validate`でも検証できます。
 
 ### multi-root workspaceに対応していますか？
 

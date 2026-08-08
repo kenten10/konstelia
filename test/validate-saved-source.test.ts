@@ -71,6 +71,7 @@ function createService(scope: TourScope, boundRoot: string): ValidateSavedSource
   const storage: TourStorageProvider = {
     scope,
     saveTour: () => Promise.reject(new Error("Not used.")),
+    updateTour: () => Promise.reject(new Error("Not used.")),
     loadTour: () => Promise.resolve(tour),
     listTours: () => Promise.resolve([]),
     scanTours: () => Promise.resolve([{ location, tour, issues: [] }]),

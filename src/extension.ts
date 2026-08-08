@@ -7,6 +7,9 @@ import { AuthorizeAnchorRepair } from "./application/anchors/AuthorizeAnchorRepa
 import { DefaultTourAnchorRegistryResolver } from "./application/tours/TourAnchorRegistry";
 import { ListTours } from "./application/tours/ListTours";
 import { ListToursWithHealth } from "./application/tours/ListToursWithHealth";
+import { LoadTourDraft } from "./application/tours/LoadTourDraft";
+import { LoadTourFlow } from "./application/tours/LoadTourFlow";
+import { UpdateTour } from "./application/tours/UpdateTour";
 import { InstallSampleTours } from "./application/tours/InstallSampleTours";
 import { PlayTour } from "./application/tours/PlayTour";
 import { PlaySampleTour } from "./application/tours/PlaySampleTour";
@@ -31,6 +34,13 @@ import { DefaultSemanticAnchorAdapter } from "./infrastructure/language/DefaultS
 import { VsCodeAnchorSourceCatalog } from "./infrastructure/language/VsCodeAnchorSourceCatalog";
 import { BrowseToursCommand } from "./presentation/commands/BrowseToursCommand";
 import { CreateTourCommand } from "./presentation/commands/CreateTourCommand";
+import { createTourEditorHost, EditTourCommand } from "./presentation/commands/EditTourCommand";
+import { RefreshDiagnosticsAfterUpdate } from "./presentation/commands/RefreshDiagnosticsAfterUpdate";
+import { ShowFlowDiagramCommand } from "./presentation/commands/ShowFlowDiagramCommand";
+import { TourEditorSerializer } from "./presentation/editor/TourEditorSerializer";
+import { VsCodeEditTourUserInterface } from "./presentation/commands/VsCodeEditTourUserInterface";
+import { VsCodeShowFlowDiagramUserInterface } from "./presentation/commands/VsCodeShowFlowDiagramUserInterface";
+import { TourFlowDiagramView } from "./presentation/flow/TourFlowDiagramView";
 import { CreateAnchorCommand } from "./presentation/commands/CreateAnchorCommand";
 import { RepairAnchorCommand } from "./presentation/commands/RepairAnchorCommand";
 import { DiscoverAnchorRepairsCommand } from "./presentation/commands/DiscoverAnchorRepairsCommand";
@@ -128,7 +138,8 @@ export function activate(context: ExtensionContext): void {
     new VsCodeBrowseToursUserInterface(),
     logger,
   );
-  const tourRenderer = new VsCodeTourPlayback(context);
+  const flowDiagramView = new TourFlowDiagramView(context);
+  const tourRenderer = new VsCodeTourPlayback(context, [flowDiagramView]);
   const playTourCommand = new PlayTourCommand(
     listTours,
     listToursWithHealth,
@@ -171,6 +182,38 @@ export function activate(context: ExtensionContext): void {
     ),
     logger,
   );
+  const loadTourDraft = new LoadTourDraft(storageResolver, anchorRegistryResolver);
+  const updateTour = new RefreshDiagnosticsAfterUpdate(
+    new UpdateTour(storageResolver, anchorRegistryResolver),
+    () => diagnostics.refresh(),
+  );
+  const editTourCommand = new EditTourCommand(
+    listTours,
+    loadTourDraft,
+    updateTour,
+    new VsCodeEditTourUserInterface(context),
+    logger,
+  );
+  new TourEditorSerializer(
+    context,
+    async (scope, id) => ({
+      draft: await loadTourDraft.execute(scope, id),
+      host: createTourEditorHost(scope, id, updateTour, logger),
+    }),
+    logger,
+  );
+  const showFlowDiagramCommand = new ShowFlowDiagramCommand(
+    listTours,
+    listToursWithHealth,
+    new LoadTourFlow(
+      storageResolver,
+      anchorRegistryResolver,
+      new RootedTourSourceReader(fileSystem, repositoryRoot),
+      new DefaultSemanticAnchorAdapter(),
+    ),
+    new VsCodeShowFlowDiagramUserInterface(flowDiagramView),
+    logger,
+  );
   context.subscriptions.push(
     output,
     commands.registerCommand("konstelia.createTour", async () => {
@@ -190,6 +233,8 @@ export function activate(context: ExtensionContext): void {
       await diagnostics.refresh();
     }),
     commands.registerCommand("konstelia.browseTours", () => browseToursCommand.execute()),
+    commands.registerCommand("konstelia.editTour", () => editTourCommand.execute()),
+    commands.registerCommand("konstelia.showFlowDiagram", () => showFlowDiagramCommand.execute()),
     commands.registerCommand("konstelia.playTour", () => playTourCommand.execute()),
     commands.registerCommand("konstelia.playSampleTour", () => playSampleTourCommand.execute()),
     commands.registerCommand("konstelia.installSampleTours", async () => {

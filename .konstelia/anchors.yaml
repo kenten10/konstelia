@@ -431,7 +431,7 @@ anchors:
   - id: konstelia.playback.handle-action
     file: src/presentation/playback/VsCodeTourPlayback.ts
     symbol: VsCodeTourPlayback.start
-    refinement: if[2]
+    refinement: call(applyPlaybackAction)[0]
   - id: konstelia.playback.cleanup
     file: src/presentation/playback/VsCodeTourPlayback.ts
     symbol: VsCodeTourPlayback.start

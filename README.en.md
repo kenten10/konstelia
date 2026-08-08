@@ -4,7 +4,7 @@ English | [日本語](README.md)
 
 Konstelia is a VS Code extension for creating and playing "code tours" that guide readers through meaningful locations in source code. Instead of relying on file line numbers, it locates code using language-specific symbol paths and structural refinements. This allows Konstelia to resolve anchors again or find repair candidates even after code is moved or lightly edited.
 
-Konstelia is currently an MVP. It supports TypeScript/TSX, JavaScript/JSX, Python, Ruby, Rust, Go, Swift, Java, C#, C, C++, and Kotlin; single-root workspaces; YAML-based tour editing; and Personal, Workspace, and Repository scopes. A dedicated tour editor, flow diagrams, synchronization, and AI features are not yet available.
+Konstelia is currently an MVP. It supports TypeScript/TSX, JavaScript/JSX, Python, Ruby, Rust, Go, Swift, Java, C#, C, C++, and Kotlin; single-root workspaces; tour editing through YAML and a dedicated editing screen; flow diagrams generated from a tour; and Personal, Workspace, and Repository scopes. Synchronization, AI features, and transition animation are not yet available.
 
 - GitHub: [kenten10/konstelia](https://github.com/kenten10/konstelia)
 - Bugs and feature requests: [GitHub Issues](https://github.com/kenten10/konstelia/issues)
@@ -183,7 +183,9 @@ Each hop has the following constraints:
 - Each `ref` must identify an entry in `anchors.yaml` in the same scope.
 - Step IDs must be unique within a tour.
 
-`prerequisites` and `links` are also schema-validated, but interactive navigation between linked steps is not implemented yet. Hops currently play in the order in which they are written.
+`prerequisites` and `links` are also schema-validated. Links appear in the flow diagram, but interactive navigation between linked steps is not implemented yet. Hops currently play in the order in which they are written.
+
+Instead of writing YAML by hand, you can edit the same content in the **Konstelia: Edit Tour** editing screen.
 
 ### 4. Validate YAML and health
 
@@ -244,6 +246,37 @@ Personal tour bindings do not store absolute paths in YAML. They are kept in VS 
 
 Workspace scope is available only when a folder or workspace is open. The current implementation targets a single root and does not yet support explicit repository selection in a multi-root workspace.
 
+## Edit a tour in the editing screen
+
+Run **Konstelia: Edit Tour**, choose a scope and a tour, and Konstelia opens a dedicated editing screen. You can do the following without writing YAML:
+
+- Edit the title, description, and `prerequisites`.
+- Add, remove, and reorder steps and hops.
+- Edit each hop's `summary` and `body`.
+- Add and remove anchor references, completed from `anchors.yaml` in the same scope.
+- Switch `emphasis`; choosing `primary` demotes the other anchors of that hop to `secondary`.
+- Edit cross links (`tourId#stepId`).
+
+Edits are validated before anything is written. Schema violations, unknown anchor IDs, broken links, duplicate step IDs, and circular prerequisites block the save and are listed with their reason under the form. Once validation passes, the tour is written back to its own file, keeping the file name it already had, and diagnostics are refreshed. The tour ID matches the file name, so the editing screen keeps it read-only.
+
+Unsaved edits are marked with a `●` in front of the tab name, and the state is shown next to the save button. `Cmd+S` / `Ctrl+S` saves as well.
+
+Saving regenerates the YAML, so **comments, blank lines, and keys outside the schema are lost**. Edit the YAML directly for tours where those matter.
+
+The right-hand side shows a flow diagram generated from the current edits and refreshed as you type. Selecting a node moves the form to that hop.
+
+## Show the flow diagram
+
+Run **Konstelia: Show Flow Diagram** to render a tour in the Konstelia view of the panel area. The list shows health the same way **Konstelia: Play Tour** does and marks tours that need repair with ⚠. The diagram is generated from the tour itself.
+
+- Each step becomes a lane, with its hops laid out in playback order.
+- Transitions inside a step are solid; transitions across steps are dashed.
+- Cross links appear as chips below their step. They are informational and do not navigate.
+- Node colors report anchor health: drifted anchors use the warning color, while broken and unregistered anchors use the error color. The assessment runs through the same validation path as the catalog and the CLI.
+- Selecting a node shows that hop's summary, body, and anchors below the diagram.
+
+While a tour is playing, the view subscribes to `TourPlayer` and highlights the current hop. Selecting a node during playback jumps to that hop, and the editors follow. The diagram is a view; it holds no state of its own.
+
 ## Open tour files
 
 Use **Konstelia: Browse Tours** to choose a scope and open a saved tour YAML file. UI code does not construct storage paths; it passes the selected `TourScope` to the storage resolver.
@@ -257,6 +290,8 @@ Use **Konstelia: Browse Tours** to choose a scope and open a saved tour YAML fil
 | **Konstelia: Repair Anchor from Selection** | Rebind an existing anchor to the selected range |
 | **Konstelia: Repair Anchor Automatically** | Discover repair candidates in the workspace |
 | **Konstelia: Browse Tours** | Open a saved tour YAML file |
+| **Konstelia: Edit Tour** | Edit a tour in the dedicated editing screen |
+| **Konstelia: Show Flow Diagram** | Show a tour's flow diagram in the panel |
 | **Konstelia: Play Tour** | Select a scope and tour, then play it |
 | **Konstelia: Play Sample Tour** | Directly play the bundled Repository sample |
 | **Konstelia: Install Sample Tours** | Idempotently install samples into all three scopes |

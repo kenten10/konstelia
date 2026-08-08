@@ -16,12 +16,22 @@ import {
   type TextEditor,
 } from "vscode";
 import { supportedLanguageIds } from "../../infrastructure/language/SupportedLanguages";
-import type { TourPlayback } from "../../application/tours/TourPlayback";
+import type {
+  TourPlayback,
+  TourPlaybackController,
+  TourPlaybackObserver,
+} from "../../application/tours/TourPlayback";
 import {
   assessTourAnchors,
   type AnchorAssessment,
 } from "../../application/tours/AssessTourAnchors";
 import { TourPlayer, type TourPlayerPosition } from "../../application/tours/TourPlayer";
+import {
+  applyPlaybackAction,
+  isPlayablePosition,
+  type PlaybackAction,
+  type PlaybackPosition,
+} from "../../application/tours/TourPlaybackActions";
 import { AnchorHealth, type TourAnchor } from "../../domain/tour/TourAnchor";
 import { assertSafeTourSourcePath } from "../../domain/tour/TourSourcePath";
 import type { TourDocument } from "../../domain/tour/TourDocument";
@@ -52,7 +62,6 @@ interface PopoverTarget {
   range: Range;
 }
 
-type PlaybackAction = "previous" | "next" | "exit";
 
 const previousCommand = "konstelia.playback.previous";
 const blockedPreviousCommand = "konstelia.playback.blockedPrevious";
@@ -80,9 +89,11 @@ export class VsCodeTourPlayback {
   private pendingPopoverRefresh: Promise<void> = Promise.resolve();
   private readonly anchorResolver = new ResolveAnchor(new DefaultSemanticAnchorAdapter());
   private running = false;
+  private pendingGoto: PlaybackPosition | undefined;
 
   public constructor(
     context: ExtensionContext,
+    private readonly observers: readonly TourPlaybackObserver[] = [],
   ) {
     context.subscriptions.push(
       this.primaryDecoration,
@@ -150,6 +161,7 @@ export class VsCodeTourPlayback {
     this.running = true;
     try {
       const prepared = await this.prepareAnchors(tour, anchors, rootLocator);
+      this.notifyStarted(tour, player, prepared);
       await commands.executeCommand("setContext", "konstelia.tourActive", true);
       while (player.getState().status === "playing") {
         const current = player.getCurrent();
@@ -159,15 +171,12 @@ export class VsCodeTourPlayback {
         const rendered = await this.render(current, prepared);
         player.setHealth(rendered.health);
         const action = await this.showPopover(tour, current, rendered.target, player);
-        if (action === "previous") {
-          player.previous();
-        } else if (action === "next") {
-          player.next();
-        } else {
-          player.exit();
-        }
+        const target = this.pendingGoto;
+        this.pendingGoto = undefined;
+        applyPlaybackAction(player, action, target);
       }
     } finally {
+      this.pendingGoto = undefined;
       await this.selectAction("exit");
       await this.stopPopoverRefresh();
       this.currentHover = undefined;
@@ -178,7 +187,53 @@ export class VsCodeTourPlayback {
       await commands.executeCommand("setContext", "konstelia.tourActive", false);
       await commands.executeCommand("setContext", "konstelia.tourCanPrevious", false);
       await commands.executeCommand("setContext", "konstelia.tourCanNext", false);
+      this.notifyStopped();
     }
+  }
+
+  private notifyStopped(): void {
+    for (const observer of this.observers) {
+      try {
+        observer.onTourStopped();
+      } catch {
+        // A view must not be able to break playback cleanup.
+      }
+    }
+  }
+
+  private notifyStarted(
+    tour: TourDocument,
+    player: TourPlayer,
+    prepared: ReadonlyMap<string, PreparedAnchor>,
+  ): void {
+    if (this.observers.length === 0) {
+      return;
+    }
+    const anchorHealth = new Map(
+      [...prepared].map(([id, anchor]) => [id, anchor.health] as const),
+    );
+    const controller: TourPlaybackController = {
+      requestGoto: (stepIndex, hopIndex) => this.requestGoto(tour, { stepIndex, hopIndex }),
+    };
+    for (const observer of this.observers) {
+      try {
+        observer.onTourStarted({ tour, player, anchorHealth, controller });
+      } catch {
+        // A view must not be able to prevent playback from starting.
+      }
+    }
+  }
+
+  private requestGoto(tour: TourDocument, position: PlaybackPosition): void {
+    if (!this.running || !isPlayablePosition(tour, position)) {
+      return;
+    }
+    if (!this.availableActions.has("goto")) {
+      // The hop is still being rendered; a jump requested now would be dropped silently.
+      return;
+    }
+    this.pendingGoto = position;
+    void this.selectAction("goto");
   }
 
   private async prepareAnchors(
@@ -332,14 +387,11 @@ export class VsCodeTourPlayback {
     const links: string[] = [];
     this.availableActions.clear();
     if (player.canPrevious()) {
-      this.availableActions.add("previous");
       links.push(`[前へ](command:${previousCommand})`);
     }
     if (player.canNext()) {
-      this.availableActions.add("next");
       links.push(`[次へ](command:${nextCommand})`);
     }
-    this.availableActions.add("exit");
     links.push(`[終了](command:${exitCommand})`);
     controls.isTrusted = {
       enabledCommands: [previousCommand, nextCommand, exitCommand],
@@ -351,12 +403,23 @@ export class VsCodeTourPlayback {
       hover: new Hover([content, controls], target.range),
     };
     this.currentTarget = target;
-    await commands.executeCommand("setContext", "konstelia.tourCanPrevious", player.canPrevious());
-    await commands.executeCommand("setContext", "konstelia.tourCanNext", player.canNext());
-    target.editor.selection = new Selection(target.range.start, target.range.start);
+    // The action promise must exist before any action becomes selectable. Otherwise a jump
+    // requested from the flow diagram clears the available actions without resolving anything,
+    // and the playback loop waits forever.
     const action = new Promise<PlaybackAction>((resolve) => {
       this.resolveAction = resolve;
     });
+    if (player.canPrevious()) {
+      this.availableActions.add("previous");
+    }
+    if (player.canNext()) {
+      this.availableActions.add("next");
+    }
+    this.availableActions.add("goto");
+    this.availableActions.add("exit");
+    await commands.executeCommand("setContext", "konstelia.tourCanPrevious", player.canPrevious());
+    await commands.executeCommand("setContext", "konstelia.tourCanNext", player.canNext());
+    target.editor.selection = new Selection(target.range.start, target.range.start);
     await commands.executeCommand("editor.action.hideHover");
     await this.showAndFocusPopover();
     this.keepPopoverVisible(target);

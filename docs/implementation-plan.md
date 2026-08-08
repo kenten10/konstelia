@@ -98,12 +98,29 @@
 - [x] Require confirmation when authoring snaps a selection to a broader semantic symbol.
 - [x] Serialize registry updates and replace `anchors.yaml` through an atomic temporary file.
 
+## Milestone 12: Tour editor and flow diagram
+
+- [x] Add `updateTour` so an edited document replaces its own file through an atomic temporary write.
+- [x] Validate authored documents with the schema, anchor registry, and catalog rules before saving.
+- [x] Add a dedicated tour editing webview for metadata, steps, hops, anchor references, and cross links.
+- [x] Build the flow graph in the domain and lay it out and render it as SVG in vscode-free presentation modules.
+- [x] Show the diagram in the panel area and preview it live while editing.
+- [x] Subscribe the diagram to `TourPlayer` and let a node request a jump during playback.
+- [x] Report anchor health in the diagram through the shared `ValidateTourProject` path.
+- [x] Restore editors after a window reload and serialize tour writes the way the anchor registry does.
+
 ## Deferred
 
-Flow diagrams, animation, synchronization, AI assistance, languages beyond the adapters listed above, advanced Git detection, and multi-root repository selection are intentionally deferred.
+Animation, synchronization, AI assistance, languages beyond the adapters listed above, advanced Git detection, and multi-root repository selection are intentionally deferred. Two consequences of the flow diagram are deferred as well: restoring the panel layout that existed before a tour started (specification §6.4 pairs taking the layout over with restoring it) and preserving YAML comments when the editing screen writes a tour back.
 
 ## Implementation notes
 
 - The VS Code API names workspace-local extension storage `ExtensionContext.storageUri`; there is no `workspaceStorageUri` property in the supported API. The workspace provider receives `storageUri` and handles it being absent.
 - The draft specification uses `.codetours`, while the current product requirements specify `.konstelia/tours`. `.konstelia` is canonical for this implementation. A future compatibility feature must migrate `.codetours` explicitly rather than silently merging both locations.
 - The draft tour schema has no `version` field, so newly created documents omit it rather than introducing a parallel schema.
+- The specification puts the flow diagram in the bottom panel (§6.4), so it is a `WebviewView` in a panel view container rather than an editor `WebviewPanel`. This also keeps the editor columns free for the playback layout.
+- The editing screen keeps the tour id read-only. The id determines the file name, so renaming it is a move, not an edit, and belongs to a separate command. The editing host is bound to the id it was opened with and refuses documents that carry a different one.
+- The flow graph is a projection of a tour, so it lives in `domain`. Layout geometry and SVG markup are rendering decisions and live in `presentation`, but they import no vscode API and are unit tested directly. Moving them into `domain` would only be worth it if the CLI ever renders diagrams.
+- Playback owns the loop that waits for an action, so a view cannot call `TourPlayer.gotoHop` directly without leaving that loop blocked. `TourPlaybackController` is the input port playback hands to its observers; extending it to the remaining §6.1 events is the natural next step if another view needs them.
+- Specification §7.3 blocks readers from opening a broken tour. The flow diagram marks broken anchors and shows ⚠ in the picker but does not block, because the diagram is how an author finds what to repair. Whether a reader-facing diagram must apply the same block as playback is still open.
+- Validation messages stay in English because the same strings are produced for YAML diagnostics, the CLI, and the editing screen. Only surface text that exists solely in the editing screen is written in Japanese.
