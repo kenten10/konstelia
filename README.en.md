@@ -269,6 +269,8 @@ Saving regenerates the YAML, so **comments, blank lines, and keys outside the sc
 
 The right-hand side shows a flow diagram generated from the current edits and refreshed as you type. Selecting a node moves the form to that hop.
 
+![The tour editing screen: a form for steps and hops on the left, the generated flow diagram on the right](media/konstelia-editor.png)
+
 ## Show the flow diagram
 
 Run **Konstelia: Show Flow Diagram** to render a tour in the Konstelia view of the panel area. The list shows health the same way **Konstelia: Play Tour** does and marks tours that need repair with ⚠. The diagram is generated from the tour itself.
@@ -278,6 +280,8 @@ Run **Konstelia: Show Flow Diagram** to render a tour in the Konstelia view of t
 - Cross links appear as chips below their step. They are informational and do not navigate.
 - Node colors report anchor health: drifted anchors use the warning color, while broken and unregistered anchors use the error color. The assessment runs through the same validation path as the catalog and the CLI.
 - Selecting a node shows that hop's summary, body, and anchors below the diagram.
+
+![The flow diagram in the panel area: one lane per step, with the hop being played highlighted](media/konstelia-flow-diagram.png)
 
 While a tour is playing, the view subscribes to `TourPlayer` and highlights the current hop. Selecting a node during playback jumps to that hop, and the editors follow. The diagram is a view; it holds no state of its own.
 

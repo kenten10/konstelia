@@ -129,6 +129,8 @@
 - [x] Add the Marketplace icon, keywords, categories, and a changelog.
 - [x] Make `TourLocation` carry URI strings so no vscode type reaches the domain or application layers.
 - [x] Keep unsaved editor work across a window reload, and let structural edits be undone.
+- [x] Activate only for workspaces that contain tours, or when a command asks for Konstelia.
+- [x] Move the editor page markup out of the vscode-facing module so its CSP and escaping are tested.
 
 ## Deferred
 
