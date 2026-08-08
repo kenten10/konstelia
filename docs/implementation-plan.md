@@ -128,6 +128,7 @@
 - [x] Add `Konstelia: Delete Tour`, warning about the tours that reference the one being deleted.
 - [x] Add the Marketplace icon, keywords, categories, and a changelog.
 - [x] Make `TourLocation` carry URI strings so no vscode type reaches the domain or application layers.
+- [x] Keep unsaved editor work across a window reload, and let structural edits be undone.
 
 ## Deferred
 
@@ -147,5 +148,7 @@ Animation, synchronization, AI assistance, languages beyond the adapters listed 
 - Specification §10(F) is decided against the `default.member` pseudo-segment: members of an anonymous default export cannot be addressed, and the tool asks the author to name the export. The same §4.4 rule now also excludes local functions and object literal members declared inside a function body.
 - `toSafeFilenameStem` is a naming rule of the tour model, so it lives in `domain`. `findUniqueTourUri` stays in `infrastructure` because it needs a filesystem. With that move, `application` imports nothing from `infrastructure` at runtime; what remains are type-only imports of the storage ports.
 - `TourLocation` carries URI strings rather than `Uri`. Storage keeps `Uri` internally for writing, and the presentation layer parses the string when it needs to open a document. This is what makes `grep -r 'from "vscode"' src/domain src/application` come back empty (§8).
+- The tour editor keeps its working document in webview state, so a window reload restores unsaved work. Only the shape of the stored document is checked, because unsaved work is usually mid-edit and therefore invalid, which the editor is built to display. The check and the state parsing live in `TourEditorState`, away from the vscode API, so they are unit tested.
+- Undo covers structural edits only. Inside a text field the browser's own undo is better, so `Cmd+Z` is only intercepted when the focus is outside one.
 - Deleting a tour leaves the anchor registry untouched: anchors are shared, so removing them with a tour would break other tours. Dangling references in other tours are surfaced in the confirmation instead.
 - Validation messages stay in English because the same strings are produced for YAML diagnostics, the CLI, and the editing screen. Only surface text that exists solely in the editing screen is written in Japanese.

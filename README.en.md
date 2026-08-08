@@ -261,7 +261,9 @@ Run **Konstelia: Edit Tour**, choose a scope and a tour, and Konstelia opens a d
 
 Edits are validated before anything is written. Schema violations, unknown anchor IDs, broken links, duplicate step IDs, and circular prerequisites block the save and are listed with their reason under the form. Once validation passes, the tour is written back to its own file, keeping the file name it already had, and diagnostics are refreshed. The tour ID matches the file name, so the editing screen keeps it read-only.
 
-Unsaved edits are marked with a `●` in front of the tab name, and the state is shown next to the save button. `Cmd+S` / `Ctrl+S` saves as well.
+Unsaved edits are marked with a `●` in front of the tab name, and the state is shown next to the save button. `Cmd+S` / `Ctrl+S` saves as well. Unsaved work survives a window reload.
+
+Adding, removing, and reordering steps, hops, anchors, and links can be reverted with **Undo** (`Cmd+Z` / `Ctrl+Z` outside a field). Inside a field, the field's own undo applies.
 
 Saving regenerates the YAML, so **comments, blank lines, and keys outside the schema are lost**. Edit the YAML directly for tours where those matter.
 

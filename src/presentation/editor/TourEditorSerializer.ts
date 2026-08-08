@@ -5,10 +5,11 @@ import {
   type WebviewPanelSerializer,
 } from "vscode";
 import type { TourDraft } from "../../application/tours/LoadTourDraft";
-import { TourScope } from "../../domain/tour/TourScope";
+import type { TourScope } from "../../domain/tour/TourScope";
 import type { Logger } from "../../shared/logging/Logger";
 import type { TourEditorHost } from "../commands/EditTourCommand";
 import { TourEditorPanel, tourEditorViewType } from "./TourEditorPanel";
+import { parseTourEditorState } from "./TourEditorState";
 
 export interface RestoredTourEditor {
   readonly draft: TourDraft;
@@ -33,14 +34,14 @@ export class TourEditorSerializer implements WebviewPanelSerializer {
   }
 
   public async deserializeWebviewPanel(panel: WebviewPanel, state: unknown): Promise<void> {
-    const target = parseState(state);
+    const target = parseTourEditorState(state);
     if (!target) {
       panel.dispose();
       return;
     }
     try {
       const { draft, host } = await this.openEditor(target.scope, target.tourId);
-      TourEditorPanel.adopt(panel, draft, host);
+      TourEditorPanel.adopt(panel, draft, host, target.unsavedTour);
     } catch (error) {
       this.logger.error(`Could not restore the editor for tour '${target.tourId}'`, error);
       panel.dispose();
@@ -48,14 +49,3 @@ export class TourEditorSerializer implements WebviewPanelSerializer {
   }
 }
 
-function parseState(state: unknown): { scope: TourScope; tourId: string } | undefined {
-  if (typeof state !== "object" || state === null) {
-    return undefined;
-  }
-  const { scope, tourId } = state as { scope?: unknown; tourId?: unknown };
-  const scopes: readonly string[] = Object.values(TourScope);
-  if (typeof scope !== "string" || !scopes.includes(scope) || typeof tourId !== "string" || !tourId) {
-    return undefined;
-  }
-  return { scope: scope as TourScope, tourId };
-}

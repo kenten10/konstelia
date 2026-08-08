@@ -13,6 +13,7 @@ import type { TourEditorHost } from "../commands/EditTourCommand";
 import { layoutTourFlowDiagram } from "../flow/TourFlowLayout";
 import { renderTourFlowSvg, tourFlowStyles } from "../flow/TourFlowSvg";
 import { createNonce } from "../webview/WebviewSupport";
+import { isTourDocumentShape } from "./TourEditorState";
 
 interface EditorMessage {
   readonly type?: string;
@@ -61,8 +62,16 @@ export class TourEditorPanel {
     );
   }
 
-  /** Takes over a panel VS Code restored after a reload and gives it a fresh draft. */
-  public static adopt(panel: WebviewPanel, draft: TourDraft, host: TourEditorHost): void {
+  /**
+   * Takes over a panel VS Code restored after a reload. `unsavedTour` is the document the
+   * author was editing when the window went away; it replaces the one read from disk.
+   */
+  public static adopt(
+    panel: WebviewPanel,
+    draft: TourDraft,
+    host: TourEditorHost,
+    unsavedTour?: TourDocument,
+  ): void {
     const key = panelKey(draft);
     const existing = TourEditorPanel.open.get(key);
     if (existing) {
@@ -72,7 +81,14 @@ export class TourEditorPanel {
       return;
     }
     panel.webview.options = editorPanelOptions;
-    TourEditorPanel.open.set(key, new TourEditorPanel(panel, draft, host, key));
+    const restored = unsavedTour && unsavedTour.id === draft.tour.id
+      ? { ...draft, tour: unsavedTour, restored: true }
+      : draft;
+    const editor = new TourEditorPanel(panel, restored, host, key);
+    if (restored !== draft) {
+      editor.setTitle(restored.tour.title, true);
+    }
+    TourEditorPanel.open.set(key, editor);
   }
 
   private disposed = false;
@@ -81,7 +97,7 @@ export class TourEditorPanel {
 
   private constructor(
     private readonly panel: WebviewPanel,
-    draft: TourDraft,
+    draft: RenderedDraft,
     private readonly host: TourEditorHost,
     key: string,
   ) {
@@ -190,6 +206,9 @@ export class TourEditorPanel {
   }
 }
 
+/** A draft plus the flag that tells the page it is showing recovered, unsaved work. */
+type RenderedDraft = TourDraft & { readonly restored?: boolean };
+
 const editorPanelOptions = {
   enableScripts: true,
   retainContextWhenHidden: true,
@@ -200,26 +219,7 @@ function panelKey(draft: TourDraft): string {
   return `${draft.scope}:${draft.tour.id}`;
 }
 
-/**
- * The webview is a separate, untrusted process. Only documents whose shape the diagram and the
- * validators can handle are accepted; the values themselves are checked by `UpdateTour`.
- */
-function isTourDocumentShape(value: unknown): value is TourDocument {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const tour = value as Partial<TourDocument>;
-  return typeof tour.id === "string"
-    && typeof tour.title === "string"
-    && Array.isArray(tour.steps)
-    && tour.steps.every((step) =>
-      typeof step === "object" && step !== null
-      && Array.isArray(step.hops)
-      && step.hops.every((hop) =>
-        typeof hop === "object" && hop !== null && Array.isArray(hop.anchors)));
-}
-
-function renderTourEditorHtml(draft: TourDraft): string {
+function renderTourEditorHtml(draft: RenderedDraft): string {
   const nonce = createNonce();
   const data = JSON.stringify(draft).replace(/</g, "\\u003c");
   return `<!DOCTYPE html>
@@ -241,6 +241,7 @@ function renderTourEditorHtml(draft: TourDraft): string {
       </div>
       <div class="toolbar-actions">
         <span class="subtle" id="status"></span>
+        <button id="undo" type="button" class="secondary">元に戻す</button>
         <button id="save" type="button">保存</button>
       </div>
     </header>
@@ -314,7 +315,8 @@ const editorScript = String.raw`
 (function () {
   const vscode = acquireVsCodeApi();
   const draft = JSON.parse(document.getElementById("draft-data").textContent);
-  const tour = draft.tour;
+  let tour = draft.tour;
+  const history = [];
   tour.steps = tour.steps || [];
   const stepsHost = document.getElementById("steps");
   const issuesHost = document.getElementById("issues");
@@ -323,6 +325,7 @@ const editorScript = String.raw`
   let syncTimer;
   let requestId = 0;
   let saving = false;
+  let dirty = Boolean(draft.restored);
 
   function el(tag, props, children) {
     const node = document.createElement(tag);
@@ -375,6 +378,7 @@ const editorScript = String.raw`
     if (target < 0 || target >= list.length) {
       return;
     }
+    snapshot();
     const item = list[index];
     list.splice(index, 1);
     list.splice(target, 0, item);
@@ -383,6 +387,7 @@ const editorScript = String.raw`
   }
 
   function remove(list, index) {
+    snapshot();
     list.splice(index, 1);
     render();
     sync();
@@ -434,6 +439,7 @@ const editorScript = String.raw`
     }
     card.append(el("div", { className: "row" }, [
       button("アンカーを追加", function () {
+        snapshot();
         addAnchor(hop);
         render();
         sync();
@@ -501,6 +507,7 @@ const editorScript = String.raw`
       card.append(renderHop(step, stepIndex, step.hops[index], index));
     }
     card.append(button("ホップを追加", function () {
+      snapshot();
       step.hops.push({ summary: "", anchors: [] });
       render();
       sync();
@@ -510,6 +517,7 @@ const editorScript = String.raw`
       card.append(renderLink(step, step.links[index], index));
     }
     card.append(button("クロスリンクを追加", function () {
+      snapshot();
       step.links.push({ to: "", label: "" });
       render();
       sync();
@@ -572,6 +580,11 @@ const editorScript = String.raw`
     statusNode.textContent = text;
   }
 
+  // VS Code keeps this state across a window reload, so unsaved edits survive one.
+  function persist() {
+    vscode.setState({ scope: draft.scope, tourId: tour.id, tour: tour, dirty: dirty });
+  }
+
   function scheduleSync() {
     markDirty();
     clearTimeout(syncTimer);
@@ -579,7 +592,29 @@ const editorScript = String.raw`
   }
 
   function markDirty() {
+    dirty = true;
     setStatus("未保存の変更があります");
+    persist();
+  }
+
+  function snapshot() {
+    history.push(JSON.stringify(tour));
+    if (history.length > 50) {
+      history.shift();
+    }
+    undoButton.disabled = false;
+  }
+
+  function undo() {
+    const previous = history.pop();
+    if (previous === undefined) {
+      return;
+    }
+    tour = JSON.parse(previous);
+    undoButton.disabled = history.length === 0;
+    renderMetaFields();
+    render();
+    sync();
   }
 
   function sync(options) {
@@ -602,25 +637,22 @@ const editorScript = String.raw`
     vscode.postMessage({ type: "save", tour: tour, requestId: requestId });
   }
 
-  // VS Code restores the panel after a reload; the state tells the serializer what to reopen.
-  vscode.setState({ scope: draft.scope, tourId: tour.id });
-  document.getElementById("heading").textContent = tour.title;
+  const undoButton = document.getElementById("undo");
+  undoButton.disabled = true;
+  undoButton.addEventListener("click", undo);
   document.getElementById("identity").textContent = draft.scope + " / " + tour.id + "（idは変更できません）";
   const titleInput = document.getElementById("title");
-  titleInput.value = tour.title;
   titleInput.addEventListener("input", function () {
     tour.title = titleInput.value;
     document.getElementById("heading").textContent = titleInput.value;
     scheduleSync();
   });
   const descriptionInput = document.getElementById("description");
-  descriptionInput.value = tour.description || "";
   descriptionInput.addEventListener("input", function () {
     tour.description = descriptionInput.value;
     scheduleSync();
   });
   const prerequisitesInput = document.getElementById("prerequisites");
-  prerequisitesInput.value = (tour.prerequisites || []).join(", ");
   prerequisitesInput.addEventListener("input", function () {
     tour.prerequisites = prerequisitesInput.value
       .split(",")
@@ -628,7 +660,15 @@ const editorScript = String.raw`
       .filter(function (value) { return value.length > 0; });
     scheduleSync();
   });
+  function renderMetaFields() {
+    document.getElementById("heading").textContent = tour.title;
+    titleInput.value = tour.title;
+    descriptionInput.value = tour.description || "";
+    prerequisitesInput.value = (tour.prerequisites || []).join(", ");
+  }
+
   document.getElementById("add-step").addEventListener("click", function () {
+    snapshot();
     tour.steps.push({ id: "step-" + (tour.steps.length + 1), title: "新しいステップ", hops: [] });
     render();
     sync();
@@ -638,6 +678,14 @@ const editorScript = String.raw`
     if ((event.ctrlKey || event.metaKey) && event.key === "s") {
       event.preventDefault();
       save();
+      return;
+    }
+    const editing = document.activeElement
+      && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA");
+    if ((event.ctrlKey || event.metaKey) && event.key === "z" && !event.shiftKey && !editing) {
+      // Inside a field the browser's own undo is the better behaviour.
+      event.preventDefault();
+      undo();
     }
   });
   window.addEventListener("message", function (event) {
@@ -659,6 +707,8 @@ const editorScript = String.raw`
       applyCreatedAnchor(message.target, message.id);
     } else if (message.type === "saved") {
       saving = false;
+      dirty = Boolean(message.superseded);
+      persist();
       setStatus(message.superseded ? "保存しました（その後の変更は未保存です）" : "保存しました");
     }
   });
@@ -670,7 +720,12 @@ const editorScript = String.raw`
   fillDatalist("step-targets", draft.stepTargets.map(function (target) {
     return { value: target.target, label: target.tourTitle + " / " + target.stepTitle };
   }));
+  renderMetaFields();
   render();
+  if (draft.restored) {
+    setStatus("前回の未保存の変更を復元しました");
+  }
+  persist();
   sync({ initial: true });
 })();
 `.trim();
