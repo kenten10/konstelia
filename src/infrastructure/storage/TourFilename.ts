@@ -1,15 +1,6 @@
 import type { Uri } from "vscode";
+import { toSafeFilenameStem } from "../../domain/tour/TourFilename";
 import type { FileSystem } from "../filesystem/FileSystem";
-
-export function toSafeFilenameStem(value: string): string {
-  const stem = value
-    .normalize("NFKD")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-  return stem || "tour";
-}
 
 export async function findUniqueTourUri(
   fileSystem: FileSystem,

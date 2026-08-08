@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { findUniqueTourUri, toSafeFilenameStem } from "../src/infrastructure/storage/TourFilename";
+import { toSafeFilenameStem } from "../src/domain/tour/TourFilename";
+import { findUniqueTourUri } from "../src/infrastructure/storage/TourFilename";
 import { deserializeTour, serializeTour } from "../src/infrastructure/storage/TourYaml";
 import { InMemoryFileSystem, uri } from "./fakes";
 

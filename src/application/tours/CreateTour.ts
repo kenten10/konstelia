@@ -1,6 +1,6 @@
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import type { TourScope } from "../../domain/tour/TourScope";
-import { toSafeFilenameStem } from "../../infrastructure/storage/TourFilename";
+import { toSafeFilenameStem } from "../../domain/tour/TourFilename";
 import type { TourLocation } from "../../infrastructure/storage/TourStorageProvider";
 import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
 
