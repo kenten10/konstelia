@@ -29,7 +29,18 @@ export const tourEditorViewType = "konstelia.tourEditor";
 export class TourEditorPanel {
   private static readonly open = new Map<string, TourEditorPanel>();
 
-  public static show(context: ExtensionContext, draft: TourDraft, host: TourEditorHost): void {
+  /** Closes every editing screen when the extension shuts down, without leaking per-panel entries. */
+  public static register(context: ExtensionContext): void {
+    context.subscriptions.push({
+      dispose: () => {
+        for (const editor of [...TourEditorPanel.open.values()]) {
+          editor.panel.dispose();
+        }
+      },
+    });
+  }
+
+  public static show(draft: TourDraft, host: TourEditorHost): void {
     const existing = TourEditorPanel.open.get(panelKey(draft));
     if (existing) {
       // Anchors or linkable steps may have been added since the panel was opened.
@@ -38,7 +49,6 @@ export class TourEditorPanel {
       return;
     }
     TourEditorPanel.adopt(
-      context,
       window.createWebviewPanel(
         tourEditorViewType,
         `Konstelia: ${draft.tour.title}`,
@@ -51,12 +61,7 @@ export class TourEditorPanel {
   }
 
   /** Takes over a panel VS Code restored after a reload and gives it a fresh draft. */
-  public static adopt(
-    context: ExtensionContext,
-    panel: WebviewPanel,
-    draft: TourDraft,
-    host: TourEditorHost,
-  ): void {
+  public static adopt(panel: WebviewPanel, draft: TourDraft, host: TourEditorHost): void {
     const key = panelKey(draft);
     const existing = TourEditorPanel.open.get(key);
     if (existing) {
@@ -66,7 +71,6 @@ export class TourEditorPanel {
       return;
     }
     panel.webview.options = editorPanelOptions;
-    context.subscriptions.push(panel);
     TourEditorPanel.open.set(key, new TourEditorPanel(panel, draft, host, key));
   }
 
@@ -124,8 +128,11 @@ export class TourEditorPanel {
       }
       await this.post({ type: "issues", issues, requestId });
       if (message.type === "save" && issues.length === 0) {
-        this.setTitle(tour.title, false);
-        await this.post({ type: "saved" });
+        // What was written is the document as it stood when save was pressed. Edits made while
+        // the write was in flight are still unsaved and must not be reported as saved.
+        const superseded = requestId < this.latestRequestId;
+        this.setTitle(tour.title, superseded);
+        await this.post({ type: "saved", superseded });
       }
     } catch (error) {
       const reason = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -592,7 +599,7 @@ const editorScript = String.raw`
       }
     } else if (message.type === "saved") {
       saving = false;
-      setStatus("保存しました");
+      setStatus(message.superseded ? "保存しました（その後の変更は未保存です）" : "保存しました");
     }
   });
 

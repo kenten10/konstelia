@@ -19,7 +19,7 @@ function pathOf(value: Uri): string {
 }
 
 function normalize(path: string): string {
-  const normalized = path.replace(/\/+/, "/").replace(/\/$/, "");
+  const normalized = path.replace(/([^:])\/{2,}/g, "$1/").replace(/\/+$/, "");
   return normalized || "/";
 }
 

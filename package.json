@@ -103,8 +103,21 @@
         "command": "konstelia.installSampleTours",
         "title": "Install Sample Tours",
         "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.playback.exit",
+        "title": "End Tour",
+        "category": "Konstelia"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "konstelia.playback.exit",
+          "when": "konstelia.tourActive"
+        }
+      ]
+    },
     "viewsContainers": {
       "panel": [
         {
@@ -148,14 +161,15 @@
   },
   "scripts": {
     "clean": "rimraf dist .test-dist",
+    "clean:test": "rimraf .test-dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "bundle": "rimraf dist && esbuild src/extension.ts src/cli.ts --bundle --platform=node --format=cjs --target=node20 --outdir=dist --external:vscode --sourcemap --minify",
     "bundle:watch": "esbuild src/extension.ts src/cli.ts --bundle --platform=node --format=cjs --target=node20 --outdir=dist --external:vscode --sourcemap --watch",
     "compile": "npm run typecheck && npm run bundle",
     "watch": "npm run typecheck && npm run bundle:watch",
-    "lint": "eslint src test",
+    "lint": "eslint src test scripts eslint.config.mjs",
     "test:compile": "tsc -p tsconfig.test.json",
-    "test": "npm run test:compile && node --test .test-dist/test/*.test.js",
+    "test": "npm run clean:test && npm run test:compile && node --test .test-dist/test/*.test.js",
     "tour": "npm run compile --silent && node dist/cli.js",
     "check:public": "node scripts/check-public-repository.mjs --history",
     "hooks:install": "node scripts/install-git-hooks.mjs",

@@ -38,8 +38,16 @@ export function parseRubyDocument(sourceText: string): StructuralDocument {
       continue;
     }
 
+    // `class << self` opens a body that `end` closes but names no reachable symbol.
+    if (/^\s*class\s*<</.test(text)) {
+      blocks.push({ start: line.start + firstNonWhitespace(text) });
+      continue;
+    }
+
     const container = /^\s*(?:class|module)\s+([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)/.exec(text);
     const method = /^\s*def\s+(?:self\.)?([A-Za-z_]\w*[!?=]?)/.exec(text);
+    // A single-line definition (`def size; @items.size; end`) opens and closes on one line.
+    const singleLine = Boolean(method) && /;\s*end\s*$/.test(text);
     if (container?.[1] || method?.[1]) {
       const parent = nearestRubySymbol(blocks);
       const qualifiedNames = method?.[1] ? [method[1]] : (container?.[1] ?? "").split("::");
@@ -61,6 +69,11 @@ export function parseRubyDocument(sourceText: string): StructuralDocument {
         currentParent = symbol;
       }
       if (!symbol) continue;
+      if (singleLine) {
+        symbol.end = line.end;
+        addLineRefinements(symbol, masked, line.start, line.end, "ruby");
+        continue;
+      }
       blocks.push({ start: symbol.start, symbol });
       continue;
     }
@@ -133,7 +146,12 @@ export function parseSwiftDocument(sourceText: string): StructuralDocument {
           candidate !== draft && candidate.kind === "container" && candidate.name === extension.name,
         )
       : containing;
-    if (draft.kind === "function") addBraceRefinements(draft, masked, "swift");
+  }
+  const locals = dropLocalFunctions(drafts);
+  for (const draft of drafts) {
+    if (draft.kind === "function") {
+      addBraceRefinements(draft, masked, "swift", nestedFunctionsOf(draft, [...drafts, ...locals]));
+    }
   }
   return finalizeDrafts(drafts);
 }
@@ -183,19 +201,42 @@ function nearestRubyFunction(blocks: readonly RubyBlock[]): DraftSymbol | undefi
   return [...blocks].reverse().find((block) => block.symbol?.kind === "function")?.symbol;
 }
 
-function addBraceRefinements(owner: DraftSymbol, masked: string, language: Exclude<TextLanguage, "ruby">): void {
+function addBraceRefinements(
+  owner: DraftSymbol,
+  masked: string,
+  language: Exclude<TextLanguage, "ruby">,
+  nested: readonly DraftSymbol[] = [],
+): void {
   const body = masked.slice(owner.start, owner.end);
+  // Everything up to the end of the parameter list is the declaration, not the body.
+  const parenOpen = masked.indexOf("(", owner.start);
+  const signatureEnd = parenOpen >= 0 && parenOpen < owner.end
+    ? matchingDelimiter(masked, parenOpen, "(", ")", owner.end)
+    : owner.start;
+  // A nested named function owns its own structure, exactly as the parser-backed adapters do.
+  const belongsToOwner = (start: number): boolean =>
+    start >= signatureEnd && !nested.some((child) => child.start <= start && start < child.end);
+
   const structural = /\b(if|for|foreach|while|switch|when)\b[^{};]*\{/g;
   for (const match of body.matchAll(structural)) {
     if (match.index === undefined) continue;
-    const open = owner.start + match.index + match[0].lastIndexOf("{");
+    const start = owner.start + match.index;
+    if (!belongsToOwner(start)) continue;
+    const open = start + match[0].lastIndexOf("{");
     owner.refinements.push({
       key: match[1] === "if" ? "if" : match[1] === "switch" || match[1] === "when" ? "switch" : "for",
-      range: { start: owner.start + match.index, end: matchingBrace(masked, open) },
+      range: { start, end: matchingBrace(masked, open) },
     });
   }
   for (const line of sourceLines(body)) {
-    addLineRefinements(owner, masked, owner.start + line.start, owner.start + line.end, language);
+    addLineRefinements(
+      owner,
+      masked,
+      owner.start + line.start,
+      owner.start + line.end,
+      language,
+      belongsToOwner,
+    );
   }
 }
 
@@ -205,10 +246,11 @@ function addLineRefinements(
   start: number,
   end: number,
   language: TextLanguage,
+  belongsToOwner: (position: number) => boolean = () => true,
 ): void {
   const line = masked.slice(start, end);
   const returnMatch = /\breturn\b[^;\n]*/.exec(line);
-  if (returnMatch?.index !== undefined) {
+  if (returnMatch?.index !== undefined && belongsToOwner(start + returnMatch.index)) {
     owner.refinements.push({
       key: "return",
       range: trimRange(masked, start + returnMatch.index, start + returnMatch.index + returnMatch[0].length),
@@ -218,6 +260,7 @@ function addLineRefinements(
   for (const match of line.matchAll(calls)) {
     const expression = match[1];
     if (!expression || match.index === undefined || isCallKeyword(expression, line.slice(0, match.index), language)) continue;
+    if (!belongsToOwner(start + match.index)) continue;
     const open = start + match.index + match[0].lastIndexOf("(");
     const close = matchingDelimiter(masked, open, "(", ")", end);
     owner.refinements.push({
@@ -252,10 +295,16 @@ function collectBraceTypes(masked: string, pattern: RegExp): DraftSymbol[] {
   return drafts;
 }
 
+/** Control-flow keywords a declaration pattern can mistake for a member name (`else if (…) {`). */
+const controlKeywords = new Set([
+  "if", "else", "for", "foreach", "while", "do", "switch", "case", "catch", "finally",
+  "lock", "using", "fixed", "when", "return", "throw", "yield", "new",
+]);
+
 function collectBraceFunctions(masked: string, pattern: RegExp, drafts: DraftSymbol[]): void {
   for (const match of masked.matchAll(pattern)) {
     const name = match[1];
-    if (!name || match.index === undefined) continue;
+    if (!name || match.index === undefined || controlKeywords.has(name)) continue;
     const open = match.index + match[0].lastIndexOf("{");
     drafts.push({
       kind: "function",
@@ -290,8 +339,46 @@ function assignBraceParentsAndRefinements(
     draft.parent = drafts
       .filter((candidate) => candidate !== draft && containsDraft(candidate, draft))
       .sort((left, right) => (left.end - left.start) - (right.end - right.start))[0];
-    if (draft.kind === "function") addBraceRefinements(draft, masked, language);
   }
+  const locals = dropLocalFunctions(drafts);
+  for (const draft of drafts) {
+    if (draft.kind === "function") {
+      addBraceRefinements(draft, masked, language, nestedFunctionsOf(draft, [...drafts, ...locals]));
+    }
+  }
+}
+
+/**
+ * Removes function-in-function declarations. A local function is as volatile as a closure, so
+ * the specification (§4.4) does not allow it to become a path segment; selections inside one
+ * snap to the enclosing named symbol and are narrowed with a refinement instead.
+ */
+function dropLocalFunctions(drafts: DraftSymbol[]): DraftSymbol[] {
+  const isLocal = (draft: DraftSymbol): boolean => {
+    for (let parent = draft.parent; parent; parent = parent.parent) {
+      if (parent.kind === "function") return true;
+    }
+    return false;
+  };
+  const locals = new Set(drafts.filter((draft) => draft.kind === "function" && isLocal(draft)));
+  if (locals.size === 0) {
+    return [];
+  }
+  for (const draft of drafts) {
+    while (draft.parent && locals.has(draft.parent)) {
+      draft.parent = draft.parent.parent;
+    }
+  }
+  for (let index = drafts.length - 1; index >= 0; index -= 1) {
+    const draft = drafts[index];
+    if (draft && locals.has(draft)) drafts.splice(index, 1);
+  }
+  return [...locals];
+}
+
+function nestedFunctionsOf(owner: DraftSymbol, drafts: readonly DraftSymbol[]): DraftSymbol[] {
+  return drafts.filter((candidate) =>
+    candidate !== owner && candidate.kind === "function" && containsDraft(owner, candidate));
 }
 
 function finalizeDrafts(drafts: readonly DraftSymbol[]): StructuralDocument {
@@ -331,8 +418,9 @@ function sourceLines(sourceText: string): Array<{ start: number; end: number; te
 }
 
 function maskSource(sourceText: string, language: TextLanguage): string {
-  const chars = [...sourceText];
+  const chars = [...(language === "ruby" ? maskRubyHeredocs(sourceText) : sourceText)];
   let quote: string | undefined;
+  let verbatim = false;
   let lineComment = false;
   let blockDepth = 0;
   for (let index = 0; index < chars.length; index += 1) {
@@ -356,6 +444,21 @@ function maskSource(sourceText: string, language: TextLanguage): string {
       continue;
     }
     if (quote) {
+      if (verbatim) {
+        // In a C# verbatim string a backslash is literal and `""` escapes a quote.
+        if (character === "\"" && next === "\"") {
+          chars[index] = " ";
+          chars[index + 1] = " ";
+          index += 1;
+        } else if (character === "\"") {
+          chars[index] = " ";
+          quote = undefined;
+          verbatim = false;
+        } else if (character !== "\n") {
+          chars[index] = " ";
+        }
+        continue;
+      }
       if (character === "\\") {
         chars[index] = " ";
         if (index + 1 < chars.length) chars[index + 1] = " ";
@@ -377,10 +480,36 @@ function maskSource(sourceText: string, language: TextLanguage): string {
       blockDepth = 1;
       chars[index] = chars[index + 1] = " ";
       index += 1;
+    } else if (language === "csharp" && character === "@" && next === "\"") {
+      quote = "\"";
+      verbatim = true;
+      chars[index] = " ";
+      chars[index + 1] = " ";
+      index += 1;
     } else if (character === "\"" || character === "'" || (language === "ruby" && character === "`")) {
       quote = character;
       chars[index] = " ";
     }
+  }
+  return chars.join("");
+}
+
+/**
+ * Blanks heredoc bodies before the generic masker runs. Their contents are data, and an `end`
+ * inside one would otherwise close the enclosing class or method.
+ */
+function maskRubyHeredocs(sourceText: string): string {
+  const chars = [...sourceText];
+  let terminator: string | undefined;
+  for (const line of sourceLines(sourceText)) {
+    if (terminator) {
+      const closes = line.text.trim() === terminator;
+      for (let index = line.start; index < line.end; index += 1) chars[index] = " ";
+      if (closes) terminator = undefined;
+      continue;
+    }
+    const opener = /<<[-~]?(?:"([A-Za-z_]\w*)"|'([A-Za-z_]\w*)'|([A-Z_]\w*))/.exec(line.text);
+    terminator = opener?.[1] ?? opener?.[2] ?? opener?.[3];
   }
   return chars.join("");
 }

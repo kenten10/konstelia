@@ -23,7 +23,7 @@ export type TourEditorOpener = (scope: TourScope, id: string) => Promise<Restore
  */
 export class TourEditorSerializer implements WebviewPanelSerializer {
   public constructor(
-    private readonly context: ExtensionContext,
+    context: ExtensionContext,
     private readonly openEditor: TourEditorOpener,
     private readonly logger: Logger,
   ) {
@@ -40,7 +40,7 @@ export class TourEditorSerializer implements WebviewPanelSerializer {
     }
     try {
       const { draft, host } = await this.openEditor(target.scope, target.tourId);
-      TourEditorPanel.adopt(this.context, panel, draft, host);
+      TourEditorPanel.adopt(panel, draft, host);
     } catch (error) {
       this.logger.error(`Could not restore the editor for tour '${target.tourId}'`, error);
       panel.dispose();

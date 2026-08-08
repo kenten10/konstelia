@@ -319,12 +319,16 @@ function symbolName(node: ts.Node): string | undefined {
     }
     return `${name}[${ts.isGetAccessorDeclaration(node) ? "get" : "set"}]`;
   }
+  if (ts.isPropertyAssignment(node) || (ts.isMethodDeclaration(node) && ts.isObjectLiteralExpression(node.parent))) {
+    // Members of an object literal inside a function are as volatile as the locals around
+    // them, so specification §4.4 keeps them out of symbol paths.
+    return isInsideFunctionBody(node) ? undefined : propertyName(node.name);
+  }
   if (
     ts.isMethodDeclaration(node) ||
     ts.isPropertyDeclaration(node) ||
     ts.isMethodSignature(node) ||
-    ts.isPropertySignature(node) ||
-    ts.isPropertyAssignment(node)
+    ts.isPropertySignature(node)
   ) {
     return propertyName(node.name);
   }
@@ -338,6 +342,18 @@ function propertyName(name: ts.PropertyName): string | undefined {
   return ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)
     ? name.text
     : undefined;
+}
+
+function isInsideFunctionBody(node: ts.Node): boolean {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (ts.isSourceFile(parent) || ts.isModuleBlock(parent) || ts.isClassDeclaration(parent)) {
+      return false;
+    }
+    if (ts.isFunctionLike(parent)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function isModuleScopedVariable(node: ts.VariableDeclaration): boolean {

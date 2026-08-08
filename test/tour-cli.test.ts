@@ -58,6 +58,72 @@ describe("tour validate CLI", () => {
     assert.equal(report.anchors[0]?.health, "broken");
   });
 
+  it("returns zero for a drifted anchor so drift does not fail CI", async () => {
+    // The symbol path still resolves, but its ordinal now points at another declaration.
+    await writeFixture(
+      `anchors:
+  - id: app.run
+    file: src/app.ts
+    symbol: run#1
+    snapshot:
+      hash: sha256:unused
+      text: |-
+        export function run(value: unknown) { return String(value); }
+`,
+      `export function run(value: number): number;
+export function run(value: string): string;
+export function run(value: unknown) { return String(value); }
+`,
+    );
+    const output = captureOutput();
+
+    const exitCode = await runTourCli(["validate", "--format", "json"], root, output);
+    const report = JSON.parse(output.messages.join("\n")) as {
+      health: string;
+      anchors: { health: string }[];
+    };
+
+    assert.equal(report.anchors[0]?.health, "drifted");
+    assert.equal(report.health, "drifted");
+    assert.equal(exitCode, 0);
+  });
+
+  it("accepts the default format explicitly and reports it in human form", async () => {
+    await writeFixture(
+      `anchors:
+  - id: app.run
+    file: src/app.ts
+    symbol: run
+`,
+      "export function run() { return true; }\n",
+    );
+    const output = captureOutput();
+
+    const exitCode = await runTourCli(["validate", "--format", "human"], root, output);
+
+    assert.equal(exitCode, 0);
+    assert.match(output.messages.join("\n"), /Konstelia validation: healthy/);
+  });
+
+  it("rejects unusable arguments with the usage exit code", async () => {
+    for (const args of [["build"], ["validate", "--format"], ["validate", "--format", "xml"], ["validate", "--wat"]]) {
+      const output = captureOutput();
+
+      assert.equal(await runTourCli(args, root, output), 2, args.join(" "));
+      assert.match(output.errors.join("\n"), /Usage: tour validate/);
+    }
+  });
+
+  it("separates a missing project from a broken one", async () => {
+    const output = captureOutput();
+
+    const exitCode = await runTourCli(["validate"], path.join(root, "src"), output);
+
+    assert.equal(exitCode, 2);
+    assert.match(output.errors.join("\n"), /No \.konstelia directory found/);
+    assert.deepEqual(output.messages, []);
+  });
+
   async function writeFixture(anchorYaml: string, source: string): Promise<void> {
     await mkdir(path.join(root, "src"), { recursive: true });
     await writeFile(path.join(root, ".konstelia", "anchors.yaml"), anchorYaml);

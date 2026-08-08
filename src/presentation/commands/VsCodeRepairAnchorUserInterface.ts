@@ -163,7 +163,10 @@ export class VsCodeRepairAnchorUserInterface implements
     );
     return (await window.showWarningMessage(
       `Rebind anchor '${anchorId}'?`,
+      // `detail` is only rendered for modal messages, and the before/after references are the
+      // whole point of this confirmation.
       {
+        modal: true,
         detail: `Current: ${currentReference}\nNew: ${nextReference}`,
       },
       action,

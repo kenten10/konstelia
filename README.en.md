@@ -119,6 +119,7 @@ Run **Konstelia: Play Tour**, then select a scope followed by a tour.
 - A tour does not start when its primary anchor is broken.
 - When a secondary anchor is broken, Konstelia warns you, skips that anchor, and continues.
 - Drifted anchors show their fallback location and a warning so that the author can repair them later.
+- Editing the anchored code itself does not make an anchor drifted. Drift is reported when the saved snapshot still exists somewhere else, which is what happens when an ordinal moves to another declaration.
 
 During playback, the target code is highlighted and an explanatory popover appears nearby.
 
@@ -126,7 +127,7 @@ During playback, the target code is highlighted and an explanatory popover appea
 - `Alt+Left`: move to the previous hop
 - **End Tour**: end the tour and close the highlight and popover
 
-You cannot move backward from the first hop, and the final hop does not show a Next action. The final hop remains visible until you select **End Tour**.
+You cannot move backward from the first hop. On the final hop, Next becomes **Finish**, which completes the tour and reports it. Choose **End Tour** to stop without completing; the same action is available from the Command Palette as **Konstelia: End Tour**.
 
 ## Create a tour
 
@@ -295,6 +296,7 @@ Use **Konstelia: Browse Tours** to choose a scope and open a saved tour YAML fil
 | **Konstelia: Play Tour** | Select a scope and tour, then play it |
 | **Konstelia: Play Sample Tour** | Directly play the bundled Repository sample |
 | **Konstelia: Install Sample Tours** | Idempotently install samples into all three scopes |
+| **Konstelia: End Tour** | End the running tour; shown only while one is playing |
 
 ## Troubleshooting
 

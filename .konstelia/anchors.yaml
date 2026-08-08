@@ -25,7 +25,7 @@ anchors:
     refinement: if[0]
   - id: sample.auth-controller.issue-token-call
     file: examples/authentication/authController.ts
-    symbol: AuthController.login.token
+    symbol: AuthController.login
     refinement: call(issueToken)[0]
   - id: sample.auth-controller.logout
     file: examples/authentication/authController.ts

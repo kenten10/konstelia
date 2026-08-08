@@ -37,8 +37,9 @@ export function validateTourDocument(value: unknown): TourValidationIssue[] {
       issues.push({ path, message: "Each step must be an object." });
       return;
     }
-    const stepId = requireNonEmptyString(step, "id", `${path}.id`, issues);
+    const stepId = requireNonEmptyString(step, "id", `${path}.id`, issues)?.trim();
     if (stepId) {
+      // Compare trimmed ids: serialization trims them, so 'a' and 'a ' would collide on disk.
       if (stepIds.has(stepId)) {
         issues.push({ path: `${path}.id`, message: `Duplicate step id '${stepId}'.` });
       }
@@ -82,10 +83,11 @@ export function validateTourCatalog(entries: readonly CatalogTour[]): TourCatalo
       for (const [linkIndex, link] of (step.links ?? []).entries()) {
         const target = parseLinkTarget(link.to);
         const targetTours = target ? byId.get(target.tourId) : undefined;
+        // A duplicate tour id is reported on its own; do not also claim the link is dangling.
         const targetExists =
           target &&
-          targetTours?.length === 1 &&
-          targetTours[0]?.tour.steps.some((candidate) => candidate.id === target.stepId);
+          targetTours?.some((candidate) =>
+            candidate.tour.steps.some((step) => step.id === target.stepId));
         if (!targetExists) {
           issues.push({
             key: entry.key,

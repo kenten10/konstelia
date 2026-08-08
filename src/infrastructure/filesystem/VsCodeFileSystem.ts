@@ -1,4 +1,4 @@
-import { FileType, Uri, workspace } from "vscode";
+import { FileSystemError, FileType, Uri, workspace } from "vscode";
 import { FileKind, type FileEntry, type FileSystem } from "./FileSystem";
 
 export class VsCodeFileSystem implements FileSystem {
@@ -38,8 +38,22 @@ export class VsCodeFileSystem implements FileSystem {
     try {
       await workspace.fs.stat(uri);
       return true;
-    } catch {
-      return false;
+    } catch (error) {
+      // Only a missing file means "does not exist". Reporting a permission error or an
+      // unavailable remote filesystem as "missing" would let callers replace real content
+      // with an empty document.
+      if (isMissingFile(error)) {
+        return false;
+      }
+      throw error;
     }
   }
+}
+
+function isMissingFile(error: unknown): boolean {
+  if (error instanceof FileSystemError) {
+    return error.code === "FileNotFound";
+  }
+  const code = (error as { code?: unknown } | null)?.code;
+  return code === "FileNotFound" || code === "ENOENT";
 }

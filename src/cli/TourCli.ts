@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { assertSafeTourSourcePath } from "../domain/tour/TourSourcePath";
 import { ValidateTourProject, type TourProjectFile } from "../application/tours/ValidateTourProject";
@@ -30,7 +30,14 @@ export async function runTourCli(
     options = parseOptions(args, currentDirectory);
   } catch (error) {
     output.writeError(error instanceof Error ? error.message : "Invalid arguments.");
-    output.writeError("Usage: tour validate [--format json] [--root PATH]");
+    output.writeError("Usage: tour validate [--format human|json] [--root PATH]");
+    return 2;
+  }
+
+  if (!(await hasMetadataDirectory(options.root))) {
+    // Pointing the CLI at the wrong directory is a usage error, not a broken project.
+    output.writeError(`No .konstelia directory found in '${options.root}'.`);
+    output.writeError("Run the CLI from a Konstelia project or pass --root PATH.");
     return 2;
   }
 
@@ -49,9 +56,11 @@ function parseOptions(args: readonly string[], currentDirectory: string): CliOpt
   for (let index = 1; index < args.length; index += 1) {
     const argument = args[index];
     const value = args[index + 1];
-    if (argument === "--format" && value === "json") {
-      format = "json";
+    if (argument === "--format" && (value === "json" || value === "human")) {
+      format = value;
       index += 1;
+    } else if (argument === "--format") {
+      throw new Error(`--format accepts 'human' or 'json', not '${value ?? ""}'.`);
     } else if (argument === "--root" && value) {
       root = path.resolve(currentDirectory, value);
       index += 1;
@@ -60,6 +69,14 @@ function parseOptions(args: readonly string[], currentDirectory: string): CliOpt
     }
   }
   return { format, root: path.resolve(root) };
+}
+
+async function hasMetadataDirectory(root: string): Promise<boolean> {
+  try {
+    return (await stat(path.join(root, ".konstelia"))).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 async function loadProject(root: string): Promise<Parameters<ValidateTourProject["execute"]>[0]> {

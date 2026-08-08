@@ -23,6 +23,19 @@ export default tseslint.config(
     },
   },
   {
+    // Build and safety scripts are plain ES modules outside the TypeScript projects.
+    files: ["**/*.mjs"],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      globals: {
+        Buffer: "readonly",
+        URL: "readonly",
+        console: "readonly",
+        process: "readonly",
+      },
+    },
+  },
+  {
     ignores: ["dist/**", ".test-dist/**", "node_modules/**", "experiments/**"],
   },
 );

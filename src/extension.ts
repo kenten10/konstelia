@@ -37,6 +37,7 @@ import { CreateTourCommand } from "./presentation/commands/CreateTourCommand";
 import { createTourEditorHost, EditTourCommand } from "./presentation/commands/EditTourCommand";
 import { RefreshDiagnosticsAfterUpdate } from "./presentation/commands/RefreshDiagnosticsAfterUpdate";
 import { ShowFlowDiagramCommand } from "./presentation/commands/ShowFlowDiagramCommand";
+import { TourEditorPanel } from "./presentation/editor/TourEditorPanel";
 import { TourEditorSerializer } from "./presentation/editor/TourEditorSerializer";
 import { VsCodeEditTourUserInterface } from "./presentation/commands/VsCodeEditTourUserInterface";
 import { VsCodeShowFlowDiagramUserInterface } from "./presentation/commands/VsCodeShowFlowDiagramUserInterface";
@@ -182,6 +183,7 @@ export function activate(context: ExtensionContext): void {
     ),
     logger,
   );
+  TourEditorPanel.register(context);
   const loadTourDraft = new LoadTourDraft(storageResolver, anchorRegistryResolver);
   const updateTour = new RefreshDiagnosticsAfterUpdate(
     new UpdateTour(storageResolver, anchorRegistryResolver),
@@ -191,7 +193,7 @@ export function activate(context: ExtensionContext): void {
     listTours,
     loadTourDraft,
     updateTour,
-    new VsCodeEditTourUserInterface(context),
+    new VsCodeEditTourUserInterface(),
     logger,
   );
   new TourEditorSerializer(

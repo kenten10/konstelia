@@ -93,22 +93,24 @@ export class ValidateTourProject {
       message: issue.message,
     })));
     const tourResults = input.tours.map((entry): TourValidationResult => {
-      const issues: TourProjectIssue[] = [
+      // A document that does not satisfy the schema or the catalog rules cannot be read at all.
+      const documentIssues: TourProjectIssue[] = [
         ...entry.issues.map((issue) => ({ file: entry.file, ...issue })),
         ...(catalogIssuesByFile.get(entry.file) ?? []),
       ];
       if (!entry.tour) {
-        return { file: entry.file, health: AnchorHealth.Broken, issues };
+        return { file: entry.file, health: AnchorHealth.Broken, issues: documentIssues };
       }
-      appendMissingAnchorIssues(entry.file, entry.tour, assessments, issues);
+      // Anchor problems are reported, but only `assessTourAnchors` decides the health, so a
+      // broken secondary stays drifted instead of blocking the tour (specification §7.3, §7.4).
+      const anchorIssues = missingAnchorIssues(entry.file, entry.tour, assessments);
       const assessment = assessTourAnchors(entry.tour, assessments);
-      const health = issues.length > 0 ? AnchorHealth.Broken : assessment.health;
       return {
         file: entry.file,
         id: entry.tour.id,
         title: entry.tour.title,
-        health,
-        issues,
+        health: documentIssues.length > 0 ? AnchorHealth.Broken : assessment.health,
+        issues: [...documentIssues, ...anchorIssues],
       };
     });
     const health = combineHealth([
@@ -150,12 +152,12 @@ function groupIssues(issues: readonly TourProjectIssue[]): ReadonlyMap<string, T
   return grouped;
 }
 
-function appendMissingAnchorIssues(
+function missingAnchorIssues(
   file: string,
   tour: TourDocument,
   assessments: ReadonlyMap<string, AnchorAssessment>,
-  issues: TourProjectIssue[],
-): void {
+): TourProjectIssue[] {
+  const issues: TourProjectIssue[] = [];
   for (const [stepIndex, step] of tour.steps.entries()) {
     for (const [hopIndex, hop] of step.hops.entries()) {
       for (const [anchorIndex, reference] of hop.anchors.entries()) {
@@ -169,6 +171,7 @@ function appendMissingAnchorIssues(
       }
     }
   }
+  return issues;
 }
 
 function combineHealth(states: readonly AnchorHealth[]): AnchorHealth {

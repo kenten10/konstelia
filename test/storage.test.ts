@@ -120,6 +120,20 @@ describe("tour storage scopes", () => {
     assert.equal(fileSystem.files.get("mem:/global/tours/a-tour.tour.yaml"), original);
   });
 
+  it("creates new tours atomically and cleans up after a failed write", async () => {
+    const fileSystem = new InMemoryFileSystem();
+    const provider = new PersonalTourStorageProvider(fileSystem, uri("mem:/global"));
+    await provider.saveTour({ id: "a-tour", title: "Alpha", steps: [] });
+    fileSystem.renameFile = () => Promise.reject(new Error("Disk is full."));
+
+    await assert.rejects(
+      provider.saveTour({ id: "b-tour", title: "Beta", steps: [] }),
+      /Disk is full\./,
+    );
+
+    assert.deepEqual([...fileSystem.files.keys()], ["mem:/global/tours/a-tour.tour.yaml"]);
+  });
+
   it("serializes concurrent writes so a save cannot interleave with an update", async () => {
     const fileSystem = new InMemoryFileSystem();
     const provider = new PersonalTourStorageProvider(fileSystem, uri("mem:/global"));

@@ -48,6 +48,22 @@ describe("ResolveAnchor", () => {
     assert.equal(result.range, undefined);
   });
 
+  it("stays healthy when the anchored code itself is edited", () => {
+    const original = "export function greet() { return \"hi\"; }";
+    const anchor: TourAnchor = {
+      id: "greet",
+      file: "a.ts",
+      symbol: "greet",
+      snapshot: createAnchorSnapshot(original),
+    };
+
+    const result = resolver.execute(anchor, "export function greet() { return \"hello\"; }\n");
+
+    // The saved text exists nowhere else, so the symbol still points at what the author chose.
+    assert.equal(result.health, AnchorHealth.Healthy);
+    assert.ok(result.range);
+  });
+
   it("does not report healthy when an ordinal shifts to another declaration", () => {
     const original = "export function parse(value: string): string;\nexport function parse(value: unknown) { return String(value); }";
     const implementation = "export function parse(value: unknown) { return String(value); }";

@@ -19,6 +19,10 @@ tsconfig*.json
 *.vsix.sha256
 
 dist/**/*.map
+dist/cli.js
+
+.konstelia/tours/**
+!.konstelia/tours/sample-tour.tour.yaml
 node_modules/**
 !node_modules/@lezer/common/LICENSE
 !node_modules/@lezer/cpp/LICENSE

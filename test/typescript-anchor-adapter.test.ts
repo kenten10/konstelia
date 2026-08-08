@@ -96,6 +96,38 @@ describe("TypeScriptAnchorAdapter", () => {
     );
   });
 
+  it("does not make an object literal inside a function a path segment", () => {
+    const local = `export function build() {
+  const config = { retry: () => { return 42; } };
+  return config;
+}
+`;
+    const selection = "return 42;";
+    const start = local.indexOf(selection);
+
+    const generated = adapter.generate(local, "build.ts", start, start + selection.length);
+
+    // Specification §4.4: only module, namespace, and class scoped declarations may be segments.
+    assert.equal(generated.ok, true, generated.ok ? undefined : generated.reason);
+    if (!generated.ok) return;
+    assert.equal(generated.target.symbol, "build");
+  });
+
+  it("keeps module-scoped object literal members addressable", () => {
+    const moduleScoped = `export const api = {
+  get() { return 1; },
+};
+`;
+    const selection = "return 1;";
+    const start = moduleScoped.indexOf(selection);
+
+    const generated = adapter.generate(moduleScoped, "api.ts", start, start + selection.length);
+
+    assert.equal(generated.ok, true, generated.ok ? undefined : generated.reason);
+    if (!generated.ok) return;
+    assert.equal(generated.target.symbol, "api.get");
+  });
+
   it("ranks exact and structurally similar snapshot candidates", () => {
     const snapshot = "export function login(email: string) { return verify(email); }";
     const current = `

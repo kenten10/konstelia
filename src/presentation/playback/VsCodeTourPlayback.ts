@@ -118,13 +118,15 @@ export class VsCodeTourPlayback {
       },
       window.onDidChangeTextEditorSelection((event) => {
         const target = this.currentTarget;
-        const active = event.selections[0]?.active;
+        const selection = event.selections[0];
         if (
           target &&
           event.textEditor === target.editor &&
           this.availableActions.has("exit") &&
-          active &&
-          !active.isEqual(target.range.start)
+          selection &&
+          // Leave range selections alone so the reader can still copy the code being toured.
+          selection.isEmpty &&
+          !selection.active.isEqual(target.range.start)
         ) {
           this.reopenPopover();
         }
@@ -174,6 +176,9 @@ export class VsCodeTourPlayback {
         const target = this.pendingGoto;
         this.pendingGoto = undefined;
         applyPlaybackAction(player, action, target);
+      }
+      if (player.getState().status === "completed") {
+        void window.showInformationMessage(`ツアー「${tour.title}」を完了しました。`);
       }
     } finally {
       this.pendingGoto = undefined;
@@ -383,14 +388,17 @@ export class VsCodeTourPlayback {
       content.appendText(`Anchor status: ${player.getState().health}`);
     }
 
+    // The last hop still advances: `next` completes the tour there (specification §6.2).
+    const isLastPosition = current.ordinal === current.total - 1;
+    const canAdvance = player.canNext() || isLastPosition;
     const controls = new MarkdownString();
     const links: string[] = [];
     this.availableActions.clear();
     if (player.canPrevious()) {
       links.push(`[前へ](command:${previousCommand})`);
     }
-    if (player.canNext()) {
-      links.push(`[次へ](command:${nextCommand})`);
+    if (canAdvance) {
+      links.push(`[${player.canNext() ? "次へ" : "完了"}](command:${nextCommand})`);
     }
     links.push(`[終了](command:${exitCommand})`);
     controls.isTrusted = {
@@ -412,13 +420,13 @@ export class VsCodeTourPlayback {
     if (player.canPrevious()) {
       this.availableActions.add("previous");
     }
-    if (player.canNext()) {
+    if (canAdvance) {
       this.availableActions.add("next");
     }
     this.availableActions.add("goto");
     this.availableActions.add("exit");
     await commands.executeCommand("setContext", "konstelia.tourCanPrevious", player.canPrevious());
-    await commands.executeCommand("setContext", "konstelia.tourCanNext", player.canNext());
+    await commands.executeCommand("setContext", "konstelia.tourCanNext", canAdvance);
     target.editor.selection = new Selection(target.range.start, target.range.start);
     await commands.executeCommand("editor.action.hideHover");
     await this.showAndFocusPopover();
@@ -436,6 +444,12 @@ export class VsCodeTourPlayback {
   private reopenPopover(): void {
     const target = this.currentTarget;
     if (!target) {
+      return;
+    }
+    if (target.editor.document.isClosed) {
+      // The popover cannot come back once its document is gone, and the popover is where the
+      // playback controls live. End the tour instead of leaving it running with no controls.
+      void this.selectAction("exit");
       return;
     }
     target.editor.selection = new Selection(target.range.start, target.range.start);

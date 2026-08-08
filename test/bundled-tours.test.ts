@@ -70,6 +70,37 @@ describe("bundled repository tours", () => {
     );
   });
 
+  it("keeps the shipped samples pointing only at shipped source files", () => {
+    // `.vscodeignore` excludes src/** and every repository tour except the sample, so anything
+    // the extension can play after installation must reference examples/ only.
+    const registry = parse(
+      readFileSync(path.join(repositoryRoot, ".konstelia", "anchors.yaml"), "utf8"),
+    ) as { anchors: TourAnchor[] };
+    const anchorsById = new Map(registry.anchors.map((anchor) => [anchor.id, anchor]));
+    const shipped = [
+      path.join(repositoryRoot, ".konstelia", "tours", "sample-tour.tour.yaml"),
+      ...readdirSync(path.join(repositoryRoot, "samples", "tours"))
+        .filter((name) => name.endsWith(".tour.yaml"))
+        .map((name) => path.join(repositoryRoot, "samples", "tours", name)),
+    ];
+
+    for (const file of shipped) {
+      const tour = parse(readFileSync(file, "utf8")) as TourDocument;
+      for (const step of tour.steps) {
+        for (const hop of step.hops) {
+          for (const reference of hop.anchors) {
+            const anchor = anchorsById.get(reference.ref);
+            assert.ok(anchor, `${path.basename(file)}: missing anchor '${reference.ref}'.`);
+            assert.ok(
+              anchor.file.startsWith("examples/"),
+              `${path.basename(file)}: anchor '${anchor.id}' points at '${anchor.file}', which is not shipped.`,
+            );
+          }
+        }
+      }
+    }
+  });
+
   it("keeps all scoped sample templates valid and resolvable", () => {
     const templateDirectory = path.join(repositoryRoot, "samples", "tours");
     const registry = parse(

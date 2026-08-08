@@ -28,7 +28,8 @@ export abstract class BaseYamlTourStorageProvider implements TourStorageProvider
       const directory = await this.getToursDirectory();
       await this.fileSystem.createDirectory(directory);
       const uri = await findUniqueTourUri(this.fileSystem, directory, tour.id);
-      await this.fileSystem.writeFile(uri, serializeTour(tour));
+      // Refuse to overwrite: another window may have taken this name since it was chosen.
+      await this.writeAtomically(directory, uri, serializeTour(tour), false);
       return { scope: this.scope, uri, documentUri: uri };
     });
   }
@@ -40,22 +41,8 @@ export abstract class BaseYamlTourStorageProvider implements TourStorageProvider
       if (!match) {
         throw new Error(`Tour '${tour.id}' does not exist in ${this.scope} storage.`);
       }
-      const target = match.location.uri;
       const directory = await this.getToursDirectory();
-      const temporary = this.fileSystem.joinPath(directory, `.tour.${randomUUID()}.tmp`);
-      try {
-        await this.fileSystem.writeFile(temporary, serializeTour(tour));
-        await this.fileSystem.renameFile(temporary, target, true);
-      } catch (error) {
-        try {
-          if (await this.fileSystem.exists(temporary)) {
-            await this.fileSystem.deleteFile(temporary);
-          }
-        } catch {
-          // Preserve the original write error.
-        }
-        throw error;
-      }
+      await this.writeAtomically(directory, match.location.uri, serializeTour(tour), true);
       return match.location;
     });
   }
@@ -77,12 +64,14 @@ export abstract class BaseYamlTourStorageProvider implements TourStorageProvider
       .sort((left, right) => left.title.localeCompare(right.title));
   }
 
-  public async deleteTour(id: string): Promise<void> {
-    const files = await this.scanTours();
-    const match = files.find(({ tour }) => tour?.id === id);
-    if (match) {
-      await this.fileSystem.deleteFile(match.location.uri);
-    }
+  public deleteTour(id: string): Promise<void> {
+    return this.runExclusive(async () => {
+      const files = await this.scanTours();
+      const match = files.find(({ tour }) => tour?.id === id);
+      if (match) {
+        await this.fileSystem.deleteFile(match.location.uri);
+      }
+    });
   }
 
   public async scanTours(): Promise<StoredTourFile[]> {
@@ -112,6 +101,29 @@ export abstract class BaseYamlTourStorageProvider implements TourStorageProvider
   }
 
   protected abstract getToursDirectory(): Promise<Uri>;
+
+  /** Writes through a temporary file so a failed write cannot leave a half-written tour. */
+  private async writeAtomically(
+    directory: Uri,
+    target: Uri,
+    content: Uint8Array,
+    overwrite: boolean,
+  ): Promise<void> {
+    const temporary = this.fileSystem.joinPath(directory, `.tour.${randomUUID()}.tmp`);
+    try {
+      await this.fileSystem.writeFile(temporary, content);
+      await this.fileSystem.renameFile(temporary, target, overwrite);
+    } catch (error) {
+      try {
+        if (await this.fileSystem.exists(temporary)) {
+          await this.fileSystem.deleteFile(temporary);
+        }
+      } catch {
+        // Preserve the original write error.
+      }
+      throw error;
+    }
+  }
 
   /** Serializes writes the way the anchor registry does, so two saves cannot interleave. */
   private runExclusive<T>(operation: () => Promise<T>): Promise<T> {
