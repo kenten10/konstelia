@@ -8,11 +8,10 @@ import { ValidateTourCatalog } from "../src/application/tours/ValidateTourCatalo
 import { TourScope } from "../src/domain/tour/TourScope";
 import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
 import type { TourStorageProvider } from "../src/infrastructure/storage/TourStorageProvider";
-import { uri } from "./fakes";
 
 describe("ValidateTourCatalog", () => {
   it("reports missing anchor references from the selected scope", async () => {
-    const location = { scope: TourScope.Workspace, uri: uri("mem:/tour.tour.yaml") };
+    const location = { scope: TourScope.Workspace, uri: "mem:/tour.tour.yaml" };
     const storageProvider: TourStorageProvider = {
       scope: TourScope.Workspace,
       saveTour: () => Promise.reject(new Error("Not used.")),

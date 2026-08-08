@@ -6,7 +6,6 @@ import type { TourSourceBindingStore } from "../src/application/tours/TourSource
 import type { TourDocument } from "../src/domain/tour/TourDocument";
 import { TourScope } from "../src/domain/tour/TourScope";
 import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
-import { uri } from "./fakes";
 
 describe("AuthorizeAnchorRepair", () => {
   it("allows a personal anchor only in the workspace shared by all referencing tours", async () => {
@@ -63,7 +62,7 @@ function createAuthorizer(
     resolve: (scope: TourScope) => ({
       scope,
       scanTours: () => Promise.resolve(tours.map((storedTour, index) => ({
-        location: { scope, uri: uri(`mem:/tour-${index}.tour.yaml`) },
+        location: { scope, uri: `mem:/tour-${index}.tour.yaml` },
         tour: storedTour,
         issues: [],
       }))),

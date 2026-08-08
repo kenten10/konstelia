@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { ListAnchors } from "../src/application/anchors/ListAnchors";
 import { LoadTourDraft } from "../src/application/tours/LoadTourDraft";
 import { LoadTourFlow } from "../src/application/tours/LoadTourFlow";
 import type { TourAnchorRegistryResolver } from "../src/application/tours/TourAnchorRegistry";
@@ -9,7 +10,6 @@ import { TourScope } from "../src/domain/tour/TourScope";
 import { TypeScriptAnchorAdapter } from "../src/infrastructure/language/TypeScriptAnchorAdapter";
 import type { StoredTourFile, TourStorageProvider } from "../src/infrastructure/storage/TourStorageProvider";
 import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
-import { uri } from "./fakes";
 
 const source = `export class AuthService {
   authenticate() {
@@ -44,7 +44,7 @@ function storedTour(document: TourDocument): StoredTourFile {
   return {
     location: {
       scope: TourScope.Repository,
-      uri: uri(`mem:/repo/.konstelia/tours/${document.id}.tour.yaml`),
+      uri: `mem:/repo/.konstelia/tours/${document.id}.tour.yaml`,
     },
     tour: document,
     issues: [],
@@ -164,7 +164,7 @@ describe("LoadTourDraft", () => {
       storedTour(other),
     ]);
 
-    const draft = await new LoadTourDraft(storageResolver, registryResolver)
+    const draft = await new LoadTourDraft(storageResolver, new ListAnchors(registryResolver))
       .execute(TourScope.Repository, "auth-api");
 
     assert.equal(draft.tour.id, "auth-api");
@@ -184,7 +184,7 @@ describe("LoadTourDraft", () => {
     const { storageResolver, registryResolver } = createDependencies([storedTour(other)]);
 
     await assert.rejects(
-      () => new LoadTourDraft(storageResolver, registryResolver)
+      () => new LoadTourDraft(storageResolver, new ListAnchors(registryResolver))
         .execute(TourScope.Repository, "auth-api"),
       /was not found in repository storage/,
     );

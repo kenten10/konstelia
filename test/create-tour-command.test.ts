@@ -5,7 +5,6 @@ import type { TourSourceBindingStore } from "../src/application/tours/TourSource
 import { TourScope } from "../src/domain/tour/TourScope";
 import { CreateTourCommand, type CreateTourUserInterface } from "../src/presentation/commands/CreateTourCommand";
 import type { Logger } from "../src/shared/logging/Logger";
-import { uri } from "./fakes";
 
 describe("CreateTourCommand", () => {
   it("coordinates UI and the use case without a filesystem dependency", async () => {
@@ -17,8 +16,8 @@ describe("CreateTourCommand", () => {
           tour: { id: "private-tour", title: input.title, steps: [] },
           location: {
             scope: input.scope,
-            uri: uri("mem:/private-tour.tour.yaml"),
-            documentUri: uri("mem:/private-tour.tour.yaml"),
+            uri: "mem:/private-tour.tour.yaml",
+            documentUri: "mem:/private-tour.tour.yaml",
           },
         });
       },

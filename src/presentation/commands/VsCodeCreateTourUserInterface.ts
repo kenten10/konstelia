@@ -1,4 +1,4 @@
-import { window, workspace, type QuickPickItem, type Uri } from "vscode";
+import { Uri, window, workspace, type QuickPickItem } from "vscode";
 import type { TourScope } from "../../domain/tour/TourScope";
 import type { SourceWorkspace } from "../../application/tours/TourSourceBinding";
 import type { CreateTourUserInterface, ScopeChoice } from "./CreateTourCommand";
@@ -30,8 +30,8 @@ export class VsCodeCreateTourUserInterface implements CreateTourUserInterface {
     return folder ? { uri: folder.uri.toString(), name: folder.name } : undefined;
   }
 
-  public async openDocument(uri: Uri): Promise<void> {
-    const document = await workspace.openTextDocument(uri);
+  public async openDocument(documentUri: string): Promise<void> {
+    const document = await workspace.openTextDocument(Uri.parse(documentUri));
     await window.showTextDocument(document, { preview: false });
   }
 

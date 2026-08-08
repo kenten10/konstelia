@@ -1,4 +1,3 @@
-import type { Uri } from "vscode";
 import type { ListTours } from "../../application/tours/ListTours";
 import { TourScope } from "../../domain/tour/TourScope";
 import type { TourSummary } from "../../infrastructure/storage/TourStorageProvider";
@@ -13,7 +12,7 @@ export interface BrowseScopeChoice {
 export interface BrowseToursUserInterface {
   chooseScope(choices: readonly BrowseScopeChoice[]): Promise<TourScope | undefined>;
   chooseTour(tours: readonly TourSummary[]): Promise<TourSummary | undefined>;
-  openDocument(uri: Uri): Promise<void>;
+  openDocument(documentUri: string): Promise<void>;
   showInformation(message: string): Promise<void>;
   showError(message: string): Promise<void>;
 }

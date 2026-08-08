@@ -8,7 +8,6 @@ import {
   type BrowseToursUserInterface,
 } from "../src/presentation/commands/BrowseToursCommand";
 import type { Logger } from "../src/shared/logging/Logger";
-import { uri } from "./fakes";
 
 describe("BrowseToursCommand", () => {
   it("lists the selected logical scope and opens the selected location", async () => {
@@ -18,8 +17,8 @@ describe("BrowseToursCommand", () => {
       title: "Sample",
       location: {
         scope: TourScope.Repository,
-        uri: uri("mem:/sample.tour.yaml"),
-        documentUri: uri("mem:/sample.tour.yaml"),
+        uri: "mem:/sample.tour.yaml",
+        documentUri: "mem:/sample.tour.yaml",
       },
     };
     const listTours = {

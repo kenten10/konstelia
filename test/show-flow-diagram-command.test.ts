@@ -9,12 +9,11 @@ import {
   type ShowFlowDiagramUserInterface,
 } from "../src/presentation/commands/ShowFlowDiagramCommand";
 import type { Logger } from "../src/shared/logging/Logger";
-import { uri } from "./fakes";
 
 const summary: MaybeHealthyTourSummary = {
   id: "auth-api",
   title: "Auth API",
-  location: { scope: TourScope.Repository, uri: uri("mem:/repo/.konstelia/tours/auth-api.tour.yaml") },
+  location: { scope: TourScope.Repository, uri: "mem:/repo/.konstelia/tours/auth-api.tour.yaml" },
 };
 
 const snapshot: TourFlowSnapshot = {

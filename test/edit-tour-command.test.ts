@@ -1,17 +1,19 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { LoadTourDraftUseCase, TourDraft } from "../src/application/tours/LoadTourDraft";
+import type { AnchorLister } from "../src/application/anchors/ListAnchors";
 import type { UpdateTourInput, UpdateTourUseCase } from "../src/application/tours/UpdateTour";
 import type { TourDocument } from "../src/domain/tour/TourDocument";
 import { TourScope } from "../src/domain/tour/TourScope";
 import {
   EditTourCommand,
   type EditTourUserInterface,
+  type TourEditorAnchorAuthor,
+  type TourEditorDependencies,
   type TourEditorHost,
 } from "../src/presentation/commands/EditTourCommand";
 import type { TourSummary } from "../src/infrastructure/storage/TourStorageProvider";
 import type { Logger } from "../src/shared/logging/Logger";
-import { uri } from "./fakes";
 
 const tour: TourDocument = {
   id: "auth-api",
@@ -22,7 +24,7 @@ const tour: TourDocument = {
 const summary: TourSummary = {
   id: "auth-api",
   title: "Auth API",
-  location: { scope: TourScope.Repository, uri: uri("mem:/repo/.konstelia/tours/auth-api.tour.yaml") },
+  location: { scope: TourScope.Repository, uri: "mem:/repo/.konstelia/tours/auth-api.tour.yaml" },
 };
 
 const draft: TourDraft = {
@@ -32,6 +34,15 @@ const draft: TourDraft = {
   stepTargets: [],
   tourIds: [],
 };
+
+function dependencies(
+  updateTour: UpdateTourUseCase,
+  logger: Logger = { info: () => undefined, error: () => undefined },
+  anchorAuthor: TourEditorAnchorAuthor = { createInScope: () => Promise.reject(new Error("Not used.")) },
+  listAnchors: AnchorLister = { execute: () => Promise.resolve([...draft.anchors]) },
+): TourEditorDependencies {
+  return { updateTour, listAnchors, anchorAuthor, logger };
+}
 
 function createLogger(events: string[]): Logger {
   return {
@@ -85,7 +96,7 @@ describe("EditTourCommand", () => {
     await new EditTourCommand(
       { execute: () => Promise.resolve([summary]) },
       loadDraft,
-      updateTour,
+      dependencies(updateTour),
       userInterface,
       createLogger(events),
     ).execute();
@@ -122,10 +133,10 @@ describe("EditTourCommand", () => {
     await new EditTourCommand(
       { execute: () => Promise.resolve([summary]) },
       { execute: () => Promise.resolve(draft) },
-      {
+      dependencies({
         validate: () => Promise.resolve(issues),
         execute: () => Promise.resolve({ issues }),
-      },
+      }, createLogger(events)),
       userInterface,
       createLogger(events),
     ).execute();
@@ -154,16 +165,16 @@ describe("EditTourCommand", () => {
     await new EditTourCommand(
       { execute: () => Promise.resolve([summary]) },
       { execute: () => Promise.resolve(draft) },
-      {
-        validate: (input) => {
+      dependencies({
+        validate: (input: UpdateTourInput) => {
           writes.push(`validate:${input.tour.id}`);
           return Promise.resolve([]);
         },
-        execute: (input) => {
+        execute: (input: UpdateTourInput) => {
           writes.push(`save:${input.tour.id}`);
           return Promise.resolve({ issues: [] });
         },
-      },
+      }),
       userInterface,
       createLogger(events),
     ).execute();
@@ -194,10 +205,10 @@ describe("EditTourCommand", () => {
     await new EditTourCommand(
       { execute: () => Promise.resolve([summary]) },
       { execute: () => Promise.resolve(draft) },
-      {
+      dependencies({
         validate: () => Promise.resolve([]),
         execute: () => Promise.reject(new Error("Disk is full.")),
-      },
+      }, createLogger(events)),
       userInterface,
       createLogger(events),
     ).execute();
@@ -206,6 +217,78 @@ describe("EditTourCommand", () => {
     assert.ok(editor);
     await assert.rejects(() => editor.save(tour), /Disk is full\./);
     assert.ok(events.includes("error:Failed to save repository tour 'auth-api'"));
+  });
+
+  it("creates an anchor in the edited tour's scope and returns refreshed choices", async () => {
+    const events: string[] = [];
+    let host: TourEditorHost | undefined;
+    const userInterface: EditTourUserInterface = {
+      chooseScope: () => Promise.resolve(TourScope.Repository),
+      chooseTour: () => Promise.resolve(summary),
+      openEditor: (_draft, editorHost) => {
+        host = editorHost;
+        return Promise.resolve();
+      },
+      showInformation: () => Promise.resolve(),
+      showError: () => Promise.resolve(),
+    };
+    const anchorAuthor = {
+      createInScope: (scope: TourScope) => {
+        events.push(`anchor:${scope}`);
+        return Promise.resolve({ id: "auth.new" });
+      },
+    };
+    const refreshed = [
+      { id: "auth.login", file: "src/auth.ts", symbol: "login" },
+      { id: "auth.new", file: "src/auth.ts", symbol: "verify" },
+    ];
+
+    await new EditTourCommand(
+      { execute: () => Promise.resolve([summary]) },
+      { execute: () => Promise.resolve(draft) },
+      dependencies(
+        { validate: () => Promise.resolve([]), execute: () => Promise.resolve({ issues: [] }) },
+        createLogger(events),
+        anchorAuthor,
+        { execute: () => Promise.resolve([...refreshed]) },
+      ),
+      userInterface,
+      createLogger(events),
+    ).execute();
+
+    assert.ok(host);
+    assert.deepEqual(await host.createAnchor(), { id: "auth.new", anchors: refreshed });
+    assert.ok(events.includes("anchor:repository"));
+  });
+
+  it("reports nothing when anchor creation is cancelled", async () => {
+    let host: TourEditorHost | undefined;
+    const userInterface: EditTourUserInterface = {
+      chooseScope: () => Promise.resolve(TourScope.Repository),
+      chooseTour: () => Promise.resolve(summary),
+      openEditor: (_draft, editorHost) => {
+        host = editorHost;
+        return Promise.resolve();
+      },
+      showInformation: () => Promise.resolve(),
+      showError: () => Promise.resolve(),
+    };
+
+    await new EditTourCommand(
+      { execute: () => Promise.resolve([summary]) },
+      { execute: () => Promise.resolve(draft) },
+      dependencies(
+        { validate: () => Promise.resolve([]), execute: () => Promise.resolve({ issues: [] }) },
+        undefined,
+        { createInScope: () => Promise.resolve(undefined) },
+        { execute: () => Promise.reject(new Error("Choices must not be reloaded.")) },
+      ),
+      userInterface,
+      createLogger([]),
+    ).execute();
+
+    assert.ok(host);
+    assert.equal(await host.createAnchor(), undefined);
   });
 
   it("does nothing when the author dismisses the scope picker", async () => {
@@ -221,10 +304,10 @@ describe("EditTourCommand", () => {
     await new EditTourCommand(
       { execute: () => Promise.reject(new Error("Not used.")) },
       { execute: () => Promise.reject(new Error("Not used.")) },
-      {
+      dependencies({
         validate: () => Promise.reject(new Error("Not used.")),
         execute: () => Promise.reject(new Error("Not used.")),
-      },
+      }),
       userInterface,
       createLogger(events),
     ).execute();
@@ -248,10 +331,10 @@ describe("EditTourCommand", () => {
     await new EditTourCommand(
       { execute: () => Promise.resolve([]) },
       { execute: () => Promise.reject(new Error("Not used.")) },
-      {
+      dependencies({
         validate: () => Promise.reject(new Error("Not used.")),
         execute: () => Promise.reject(new Error("Not used.")),
-      },
+      }),
       userInterface,
       createLogger(events),
     ).execute();
@@ -275,10 +358,10 @@ describe("EditTourCommand", () => {
     await new EditTourCommand(
       { execute: () => Promise.resolve([summary]) },
       { execute: () => Promise.reject(new Error("Tour 'auth-api' was not found.")) },
-      {
+      dependencies({
         validate: () => Promise.reject(new Error("Not used.")),
         execute: () => Promise.reject(new Error("Not used.")),
-      },
+      }),
       userInterface,
       createLogger(events),
     ).execute();

@@ -12,8 +12,13 @@ interface ScopeItem extends QuickPickItem {
 }
 
 export class VsCodeCreateAnchorUserInterface implements CreateAnchorUserInterface {
+  /** The tour editor supplies its own capture because a webview has no active text editor. */
+  public constructor(
+    private readonly capture: () => Promise<ProposeAnchorInput | undefined> = captureSemanticSelection,
+  ) {}
+
   public captureSelection(): Promise<ProposeAnchorInput | undefined> {
-    return captureSemanticSelection();
+    return this.capture();
   }
 
   public async confirmSnappedTarget(proposal: AnchorProposal): Promise<boolean> {

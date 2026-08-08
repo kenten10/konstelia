@@ -14,7 +14,6 @@ import {
   type PlayTourUserInterface,
 } from "../src/presentation/commands/PlayTourCommand";
 import type { Logger } from "../src/shared/logging/Logger";
-import { uri } from "./fakes";
 
 const tour: TourDocument = { id: "shared", title: "Shared Tour", steps: [] };
 
@@ -63,7 +62,7 @@ describe("PlayTourCommand", () => {
     const summary = {
       id: tour.id,
       title: tour.title,
-      location: { scope: TourScope.Repository, uri: uri("mem:/shared.tour.yaml") },
+      location: { scope: TourScope.Repository, uri: "mem:/shared.tour.yaml" },
       health: AnchorHealth.Healthy,
       reasons: [],
     };
@@ -110,7 +109,7 @@ describe("PlayTourCommand", () => {
     const personalTour = {
       id: "private",
       title: "Private",
-      location: { scope: TourScope.Personal, uri: uri("mem:/private.tour.yaml") },
+      location: { scope: TourScope.Personal, uri: "mem:/private.tour.yaml" },
       health: AnchorHealth.Healthy,
       reasons: [],
     };
@@ -165,7 +164,7 @@ describe("PlayTourCommand", () => {
     const brokenTour = {
       id: "broken",
       title: "Broken Tour",
-      location: { scope: TourScope.Repository, uri: uri("mem:/broken.tour.yaml") },
+      location: { scope: TourScope.Repository, uri: "mem:/broken.tour.yaml" },
       health: AnchorHealth.Broken,
       reasons: ["entry: symbol could not be resolved"],
     };
@@ -198,7 +197,7 @@ describe("PlayTourCommand", () => {
     const personalTour = {
       id: "private",
       title: "Private",
-      location: { scope: TourScope.Personal, uri: uri("mem:/private.tour.yaml") },
+      location: { scope: TourScope.Personal, uri: "mem:/private.tour.yaml" },
     };
     const brokenTour = {
       ...personalTour,

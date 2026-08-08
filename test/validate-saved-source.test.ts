@@ -12,7 +12,6 @@ import { TourScope } from "../src/domain/tour/TourScope";
 import { TypeScriptAnchorAdapter } from "../src/infrastructure/language/TypeScriptAnchorAdapter";
 import type { TourStorageProvider } from "../src/infrastructure/storage/TourStorageProvider";
 import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
-import { uri } from "./fakes";
 
 const tour: TourDocument = {
   id: "auth-tour",
@@ -67,7 +66,7 @@ describe("ValidateSavedSource", () => {
 });
 
 function createService(scope: TourScope, boundRoot: string): ValidateSavedSource {
-  const location = { scope, uri: uri("mem:/tour.tour.yaml") };
+  const location = { scope, uri: "mem:/tour.tour.yaml" };
   const storage: TourStorageProvider = {
     scope,
     saveTour: () => Promise.reject(new Error("Not used.")),

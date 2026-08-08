@@ -1,4 +1,3 @@
-import type { Uri } from "vscode";
 import type { CreateTourUseCase } from "../../application/tours/CreateTour";
 import type {
   SourceWorkspace,
@@ -17,7 +16,7 @@ export interface CreateTourUserInterface {
   chooseScope(choices: readonly ScopeChoice[]): Promise<TourScope | undefined>;
   askForTitle(): Promise<string | undefined>;
   getCurrentSourceWorkspace(): SourceWorkspace | undefined;
-  openDocument(uri: Uri): Promise<void>;
+  openDocument(documentUri: string): Promise<void>;
   showSuccess(message: string): Promise<void>;
   showError(message: string): Promise<void>;
 }

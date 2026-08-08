@@ -257,6 +257,7 @@ Run **Konstelia: Edit Tour**, choose a scope and a tour, and Konstelia opens a d
 - Add and remove anchor references, completed from `anchors.yaml` in the same scope.
 - Switch `emphasis`; choosing `primary` demotes the other anchors of that hop to `secondary`.
 - Edit cross links (`tourId#stepId`).
+- Create an anchor from the current source selection, either into an existing row or as a new one.
 
 Edits are validated before anything is written. Schema violations, unknown anchor IDs, broken links, duplicate step IDs, and circular prerequisites block the save and are listed with their reason under the form. Once validation passes, the tour is written back to its own file, keeping the file name it already had, and diagnostics are refreshed. The tour ID matches the file name, so the editing screen keeps it read-only.
 
@@ -293,6 +294,7 @@ Use **Konstelia: Browse Tours** to choose a scope and open a saved tour YAML fil
 | **Konstelia: Browse Tours** | Open a saved tour YAML file |
 | **Konstelia: Edit Tour** | Edit a tour in the dedicated editing screen |
 | **Konstelia: Show Flow Diagram** | Show a tour's flow diagram in the panel |
+| **Konstelia: Delete Tour** | Delete a tour file, warning about tours that reference it |
 | **Konstelia: Play Tour** | Select a scope and tour, then play it |
 | **Konstelia: Play Sample Tour** | Directly play the bundled Repository sample |
 | **Konstelia: Install Sample Tours** | Idempotently install samples into all three scopes |

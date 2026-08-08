@@ -18,6 +18,7 @@ interface EditorMessage {
   readonly type?: string;
   readonly tour?: unknown;
   readonly requestId?: unknown;
+  readonly target?: unknown;
 }
 
 export const tourEditorViewType = "konstelia.tourEditor";
@@ -107,6 +108,10 @@ export class TourEditorPanel {
   }
 
   private async handle(message: EditorMessage): Promise<void> {
+    if (message.type === "createAnchor") {
+      await this.createAnchor(message.target);
+      return;
+    }
     const tour = message.tour;
     if (!isTourDocumentShape(tour) || (message.type !== "change" && message.type !== "save")) {
       return;
@@ -153,6 +158,21 @@ export class TourEditorPanel {
     }
   }
 
+  /** Creates an anchor from the author's current source selection and reports it back. */
+  private async createAnchor(target: unknown): Promise<void> {
+    try {
+      const created = await this.host.createAnchor();
+      if (created) {
+        await this.post({ type: "anchorCreated", target, id: created.id, anchors: created.anchors });
+      }
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "An unexpected error occurred.";
+      if (!this.disposed) {
+        void window.showErrorMessage(`Could not create anchor: ${reason}`);
+      }
+    }
+  }
+
   private setTitle(title: string, unsaved: boolean): void {
     this.unsaved = unsaved;
     if (this.disposed) {
@@ -170,10 +190,6 @@ export class TourEditorPanel {
   }
 }
 
-/**
- * The webview is a separate, untrusted process. Only documents whose shape the diagram and the
- * validators can handle are accepted; the values themselves are checked by `UpdateTour`.
- */
 const editorPanelOptions = {
   enableScripts: true,
   retainContextWhenHidden: true,
@@ -184,6 +200,10 @@ function panelKey(draft: TourDraft): string {
   return `${draft.scope}:${draft.tour.id}`;
 }
 
+/**
+ * The webview is a separate, untrusted process. Only documents whose shape the diagram and the
+ * validators can handle are accepted; the values themselves are checked by `UpdateTour`.
+ */
 function isTourDocumentShape(value: unknown): value is TourDocument {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -224,6 +244,7 @@ function renderTourEditorHtml(draft: TourDraft): string {
         <button id="save" type="button">保存</button>
       </div>
     </header>
+    <p class="subtle">「選択範囲から」は、コードのエディターで最後に選択した範囲からアンカーを作成します。先にコードを選択してから押してください。</p>
     <p class="subtle warning">保存するとKonsteliaがYAMLを生成し直します。ファイル内のコメント、空行、スキーマ外のキーは失われます。</p>
     <div class="card">
       <label>タイトル<input id="title" type="text" /></label>
@@ -367,7 +388,7 @@ const editorScript = String.raw`
     sync();
   }
 
-  function renderAnchor(hop, anchor, index) {
+  function renderAnchor(hop, stepIndex, hopIndex, anchor, index) {
     const ref = textField(anchor.ref, function (value) { anchor.ref = value; }, { list: "anchor-ids" });
     const emphasis = el("select", {});
     for (const option of ["primary", "secondary"]) {
@@ -388,6 +409,7 @@ const editorScript = String.raw`
     return el("div", { className: "row" }, [
       labelled("アンカーid", ref),
       el("div", { className: "fixed" }, [labelled("強調", emphasis)]),
+      button("選択範囲から", function () { requestAnchor(stepIndex, hopIndex, index); }, true),
       button("削除", function () { remove(hop.anchors, index); }, true),
     ]);
   }
@@ -408,15 +430,47 @@ const editorScript = String.raw`
     card.dataset.hop = stepIndex + ":" + hopIndex;
     hop.anchors = hop.anchors || [];
     for (let index = 0; index < hop.anchors.length; index += 1) {
-      card.append(renderAnchor(hop, hop.anchors[index], index));
+      card.append(renderAnchor(hop, stepIndex, hopIndex, hop.anchors[index], index));
     }
-    card.append(button("アンカーを追加", function () {
-      const hasPrimary = hop.anchors.some(function (anchor) { return anchor.emphasis === "primary"; });
-      hop.anchors.push({ ref: "", emphasis: hasPrimary ? "secondary" : "primary" });
-      render();
-      sync();
-    }, true));
+    card.append(el("div", { className: "row" }, [
+      button("アンカーを追加", function () {
+        addAnchor(hop);
+        render();
+        sync();
+      }, true),
+      button("選択範囲からアンカーを追加", function () {
+        requestAnchor(stepIndex, hopIndex, -1);
+      }, true),
+    ]));
     return card;
+  }
+
+  function addAnchor(hop) {
+    const hasPrimary = hop.anchors.some(function (anchor) { return anchor.emphasis === "primary"; });
+    hop.anchors.push({ ref: "", emphasis: hasPrimary ? "secondary" : "primary" });
+    return hop.anchors.length - 1;
+  }
+
+  function requestAnchor(stepIndex, hopIndex, anchorIndex) {
+    setStatus("コードの選択範囲からアンカーを作成しています…");
+    vscode.postMessage({
+      type: "createAnchor",
+      target: { stepIndex: stepIndex, hopIndex: hopIndex, anchorIndex: anchorIndex },
+    });
+  }
+
+  function applyCreatedAnchor(target, id) {
+    const hop = tour.steps[target.stepIndex] && tour.steps[target.stepIndex].hops[target.hopIndex];
+    if (!hop) {
+      return;
+    }
+    hop.anchors = hop.anchors || [];
+    const index = target.anchorIndex >= 0 && hop.anchors[target.anchorIndex]
+      ? target.anchorIndex
+      : addAnchor(hop);
+    hop.anchors[index].ref = id;
+    render();
+    sync();
   }
 
   function renderLink(step, link, index) {
@@ -597,6 +651,12 @@ const editorScript = String.raw`
         saving = false;
         setStatus("保存していません（検証エラー）");
       }
+    } else if (message.type === "anchorCreated") {
+      draft.anchors = message.anchors;
+      fillDatalist("anchor-ids", draft.anchors.map(function (anchor) {
+        return { value: anchor.id, label: anchor.file + "::" + anchor.symbol };
+      }));
+      applyCreatedAnchor(message.target, message.id);
     } else if (message.type === "saved") {
       saving = false;
       setStatus(message.superseded ? "保存しました（その後の変更は未保存です）" : "保存しました");

@@ -1,12 +1,12 @@
-import type { Uri } from "vscode";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import type { TourScope } from "../../domain/tour/TourScope";
 import type { TourValidationIssue } from "../../domain/tour/TourValidation";
 
+/** Locations are plain URI strings so that tour listing stays independent of the editor API. */
 export interface TourLocation {
   scope: TourScope;
-  uri: Uri;
-  documentUri?: Uri;
+  uri: string;
+  documentUri?: string;
 }
 
 export interface TourSummary {

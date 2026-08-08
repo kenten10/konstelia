@@ -1,13 +1,9 @@
+import type { AnchorLister, TourAnchorChoice } from "../anchors/ListAnchors";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import type { TourScope } from "../../domain/tour/TourScope";
 import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
-import type { TourAnchorRegistryResolver } from "./TourAnchorRegistry";
 
-export interface TourAnchorChoice {
-  readonly id: string;
-  readonly file: string;
-  readonly symbol: string;
-}
+export type { TourAnchorChoice };
 
 export interface TourStepTarget {
   readonly target: string;
@@ -31,7 +27,7 @@ export interface LoadTourDraftUseCase {
 export class LoadTourDraft implements LoadTourDraftUseCase {
   public constructor(
     private readonly storageResolver: TourStorageResolver,
-    private readonly anchorRegistryResolver: TourAnchorRegistryResolver,
+    private readonly listAnchors: AnchorLister,
   ) {}
 
   public async execute(scope: TourScope, id: string): Promise<TourDraft> {
@@ -40,14 +36,11 @@ export class LoadTourDraft implements LoadTourDraftUseCase {
     if (!tour) {
       throw new Error(`Tour '${id}' was not found in ${scope} storage.`);
     }
-    const anchors = await this.anchorRegistryResolver.resolve(scope).loadAnchors();
     const catalog = files.flatMap((file) => (file.tour ? [file.tour] : []));
     return {
       scope,
       tour,
-      anchors: anchors
-        .map((anchor) => ({ id: anchor.id, file: anchor.file, symbol: anchor.symbol }))
-        .sort((left, right) => left.id.localeCompare(right.id)),
+      anchors: await this.listAnchors.execute(scope),
       stepTargets: catalog.flatMap((candidate) =>
         candidate.steps.map((step) => ({
           target: `${candidate.id}#${step.id}`,

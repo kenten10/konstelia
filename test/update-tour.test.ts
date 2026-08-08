@@ -10,13 +10,12 @@ import type {
   TourStorageProvider,
 } from "../src/infrastructure/storage/TourStorageProvider";
 import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
-import { uri } from "./fakes";
 
 function storedTour(tour: TourDocument): StoredTourFile {
   return {
     location: {
       scope: TourScope.Repository,
-      uri: uri(`mem:/repo/.konstelia/tours/${tour.id}.tour.yaml`),
+      uri: `mem:/repo/.konstelia/tours/${tour.id}.tour.yaml`,
     },
     tour,
     issues: [],

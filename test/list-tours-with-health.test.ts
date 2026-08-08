@@ -7,13 +7,12 @@ import { TourScope } from "../src/domain/tour/TourScope";
 import { TypeScriptAnchorAdapter } from "../src/infrastructure/language/TypeScriptAnchorAdapter";
 import type { TourStorageProvider } from "../src/infrastructure/storage/TourStorageProvider";
 import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
-import { uri } from "./fakes";
 
 describe("ListToursWithHealth", () => {
   it("marks a tour broken when its primary symbol cannot be resolved", async () => {
     const location = {
       scope: TourScope.Repository,
-      uri: uri("mem:/repo/.konstelia/tours/auth.tour.yaml"),
+      uri: "mem:/repo/.konstelia/tours/auth.tour.yaml",
     };
     const storage = {
       scope: TourScope.Repository,

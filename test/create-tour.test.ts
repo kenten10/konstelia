@@ -33,7 +33,7 @@ describe("CreateTour", () => {
       deleteTour: () => Promise.resolve(),
       saveTour: (tour) => {
         saves += 1;
-        return Promise.resolve({ scope: TourScope.Repository, uri: uri(`mem:/${tour.id}`) });
+        return Promise.resolve({ scope: TourScope.Repository, uri: `mem:/${tour.id}` });
       },
       updateTour: () => Promise.reject(new Error("Not used.")),
     };

@@ -3,9 +3,9 @@ import {
   DiagnosticSeverity,
   languages,
   Range,
+  Uri,
   workspace,
   type ExtensionContext,
-  type Uri,
 } from "vscode";
 import type { ValidateTourCatalog } from "../../application/tours/ValidateTourCatalog";
 import { TourScope } from "../../domain/tour/TourScope";
@@ -62,7 +62,7 @@ export class TourDiagnostics {
             diagnostic.code = "invalid-tour";
             return diagnostic;
           });
-          diagnostics.set(file.location.uri.toString(), { uri: file.location.uri, items });
+          diagnostics.set(file.location.uri, { uri: Uri.parse(file.location.uri), items });
         }
       } catch (error) {
         if (!(error instanceof ScopeUnavailableError)) {

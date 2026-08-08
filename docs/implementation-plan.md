@@ -122,6 +122,13 @@
 - [x] Fix C# verbatim strings, `else if`, and self-call detection; Ruby heredocs, singleton classes, and one-line definitions.
 - [x] Keep local functions and function-scoped object literal members out of symbol paths (§4.4).
 
+## Milestone 14: Authoring completeness
+
+- [x] Create anchors from the tour editing screen using the author's last source selection.
+- [x] Add `Konstelia: Delete Tour`, warning about the tours that reference the one being deleted.
+- [x] Add the Marketplace icon, keywords, categories, and a changelog.
+- [x] Make `TourLocation` carry URI strings so no vscode type reaches the domain or application layers.
+
 ## Deferred
 
 Animation, synchronization, AI assistance, languages beyond the adapters listed above, advanced Git detection, and multi-root repository selection are intentionally deferred. Two consequences of the flow diagram are deferred as well: restoring the panel layout that existed before a tour started (specification §6.4 pairs taking the layout over with restoring it) and preserving YAML comments when the editing screen writes a tour back.
@@ -138,4 +145,6 @@ Animation, synchronization, AI assistance, languages beyond the adapters listed 
 - Specification §7.3 blocks readers from opening a broken tour. The flow diagram marks broken anchors and shows ⚠ in the picker but does not block, because the diagram is how an author finds what to repair. Whether a reader-facing diagram must apply the same block as playback is still open.
 - Specification §10(C), snapshot auto-update, is decided as **not needed**. A resolved symbol whose text changed but whose saved text exists nowhere else is healthy, because the anchor still points at what the author chose. The snapshot is only consulted to detect an ordinal that moved to another declaration and to offer repair candidates, so `anchors.yaml` is never rewritten by a validation event and reviews stay free of snapshot noise. The cost is that this protection weakens once the anchored code is edited, which is the same trade-off as any content-based check.
 - Specification §10(F) is decided against the `default.member` pseudo-segment: members of an anonymous default export cannot be addressed, and the tool asks the author to name the export. The same §4.4 rule now also excludes local functions and object literal members declared inside a function body.
+- `TourLocation` carries URI strings rather than `Uri`. Storage keeps `Uri` internally for writing, and the presentation layer parses the string when it needs to open a document. This is what makes `grep -r 'from "vscode"' src/domain src/application` come back empty (§8).
+- Deleting a tour leaves the anchor registry untouched: anchors are shared, so removing them with a tour would break other tours. Dangling references in other tours are surfaced in the confirmation instead.
 - Validation messages stay in English because the same strings are produced for YAML diagnostics, the CLI, and the editing screen. Only surface text that exists solely in the editing screen is written in Japanese.

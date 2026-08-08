@@ -21,6 +21,8 @@
     "vscode": "^1.96.0"
   },
   "categories": [
+    "Education",
+    "Visualization",
     "Other"
   ],
   "activationEvents": [
@@ -45,6 +47,7 @@
     "onCommand:konstelia.discoverAnchorRepairs",
     "onCommand:konstelia.browseTours",
     "onCommand:konstelia.editTour",
+    "onCommand:konstelia.deleteTour",
     "onCommand:konstelia.showFlowDiagram",
     "onWebviewPanel:konstelia.tourEditor",
     "onCommand:konstelia.playTour",
@@ -82,6 +85,11 @@
       {
         "command": "konstelia.editTour",
         "title": "Edit Tour",
+        "category": "Konstelia"
+      },
+      {
+        "command": "konstelia.deleteTour",
+        "title": "Delete Tour",
         "category": "Konstelia"
       },
       {
@@ -200,5 +208,13 @@
     "eslint": "^9.20.0",
     "rimraf": "^6.0.1",
     "typescript-eslint": "^8.24.0"
-  }
+  },
+  "keywords": [
+    "code tour",
+    "onboarding",
+    "walkthrough",
+    "documentation",
+    "codetour"
+  ],
+  "icon": "media/icon.png"
 }

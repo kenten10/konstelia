@@ -290,6 +290,7 @@ Workspaceスコープはフォルダーまたはworkspaceを開いている場�
 - アンカー参照の追加と削除（同じスコープの`anchors.yaml`にあるIDを補完します）
 - `emphasis`の切り替え（`primary`を選ぶと同じホップの他のアンカーは自動で`secondary`になります）
 - クロスリンク（`tourId#stepId`）の編集
+- コードの選択範囲からのアンカー作成（「選択範囲から」／「選択範囲からアンカーを追加」）
 
 編集内容はYAML保存前に検証します。スキーマ違反、存在しないアンカーID、壊れたリンク、重複したstep ID、循環したprerequisiteがある場合は保存せず、画面下部の検証結果に理由を表示します。検証を通ると元のツアーファイルへ上書き保存し、診断を更新します。ファイル名は変わりません。ツアーidはファイル名と対応するため、編集画面では変更できません。
 
@@ -326,6 +327,7 @@ Workspaceスコープはフォルダーまたはworkspaceを開いている場�
 | **Konstelia: Browse Tours** | 保存済みツアーYAMLを開く |
 | **Konstelia: Edit Tour** | 専用の編集画面でツアーを編集する |
 | **Konstelia: Show Flow Diagram** | ツアーのフロー図をパネルに表示する |
+| **Konstelia: Delete Tour** | ツアーファイルを削除する（参照元を警告） |
 | **Konstelia: Play Tour** | スコープとツアーを選んで再生する |
 | **Konstelia: Play Sample Tour** | 同梱Repositoryサンプルを直接再生する |
 | **Konstelia: Install Sample Tours** | 3スコープへサンプルを冪等に導入する |

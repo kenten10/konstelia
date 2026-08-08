@@ -2,6 +2,7 @@ import type { Uri } from "vscode";
 import { randomUUID } from "node:crypto";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import type { TourScope } from "../../domain/tour/TourScope";
+import type { TourValidationIssue } from "../../domain/tour/TourValidation";
 import { FileKind, type FileSystem } from "../filesystem/FileSystem";
 import { findUniqueTourUri } from "./TourFilename";
 import type {
@@ -15,6 +16,17 @@ import {
   serializeTour,
   TourDocumentValidationError,
 } from "./TourYaml";
+
+interface ScannedTourFile {
+  readonly uri: Uri;
+  readonly tour?: TourDocument;
+  readonly issues: readonly TourValidationIssue[];
+}
+
+function locationOf(scope: TourScope, uri: Uri): TourLocation {
+  const value = uri.toString();
+  return { scope, uri: value, documentUri: value };
+}
 
 export abstract class BaseYamlTourStorageProvider implements TourStorageProvider {
   public abstract readonly scope: TourScope;
@@ -30,20 +42,20 @@ export abstract class BaseYamlTourStorageProvider implements TourStorageProvider
       const uri = await findUniqueTourUri(this.fileSystem, directory, tour.id);
       // Refuse to overwrite: another window may have taken this name since it was chosen.
       await this.writeAtomically(directory, uri, serializeTour(tour), false);
-      return { scope: this.scope, uri, documentUri: uri };
+      return locationOf(this.scope, uri);
     });
   }
 
   public updateTour(tour: TourDocument): Promise<TourLocation> {
     return this.runExclusive(async () => {
-      const files = await this.scanTours();
+      const files = await this.scanFiles();
       const match = files.find((file) => file.tour?.id === tour.id);
       if (!match) {
         throw new Error(`Tour '${tour.id}' does not exist in ${this.scope} storage.`);
       }
       const directory = await this.getToursDirectory();
-      await this.writeAtomically(directory, match.location.uri, serializeTour(tour), true);
-      return match.location;
+      await this.writeAtomically(directory, match.uri, serializeTour(tour), true);
+      return locationOf(this.scope, match.uri);
     });
   }
 
@@ -66,35 +78,44 @@ export abstract class BaseYamlTourStorageProvider implements TourStorageProvider
 
   public deleteTour(id: string): Promise<void> {
     return this.runExclusive(async () => {
-      const files = await this.scanTours();
+      const files = await this.scanFiles();
       const match = files.find(({ tour }) => tour?.id === id);
       if (match) {
-        await this.fileSystem.deleteFile(match.location.uri);
+        await this.fileSystem.deleteFile(match.uri);
       }
     });
   }
 
   public async scanTours(): Promise<StoredTourFile[]> {
+    const files = await this.scanFiles();
+    return files.map(({ uri, tour, issues }) => ({
+      location: locationOf(this.scope, uri),
+      ...(tour ? { tour } : {}),
+      issues,
+    }));
+  }
+
+  /** The Uri-typed view the provider needs for writing; callers only ever see strings. */
+  private async scanFiles(): Promise<ScannedTourFile[]> {
     const directory = await this.getToursDirectory();
     if (!(await this.fileSystem.exists(directory))) {
       return [];
     }
     const entries = await this.fileSystem.listDirectory(directory);
-    const files: StoredTourFile[] = [];
+    const files: ScannedTourFile[] = [];
     for (const entry of entries) {
       if (entry.kind !== FileKind.File || !entry.name.endsWith(".tour.yaml")) {
         continue;
       }
       const uri = this.fileSystem.joinPath(directory, entry.name);
-      const location = { scope: this.scope, uri, documentUri: uri };
       try {
-        files.push({ location, tour: deserializeTour(await this.fileSystem.readFile(uri)), issues: [] });
+        files.push({ uri, tour: deserializeTour(await this.fileSystem.readFile(uri)), issues: [] });
       } catch (error) {
         const issues =
           error instanceof TourDocumentValidationError
             ? error.issues
             : [{ path: "$", message: error instanceof Error ? error.message : "Invalid YAML." }];
-        files.push({ location, issues });
+        files.push({ uri, issues });
       }
     }
     return files;

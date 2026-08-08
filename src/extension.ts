@@ -34,7 +34,12 @@ import { DefaultSemanticAnchorAdapter } from "./infrastructure/language/DefaultS
 import { VsCodeAnchorSourceCatalog } from "./infrastructure/language/VsCodeAnchorSourceCatalog";
 import { BrowseToursCommand } from "./presentation/commands/BrowseToursCommand";
 import { CreateTourCommand } from "./presentation/commands/CreateTourCommand";
+import { DeleteTourCommand } from "./presentation/commands/DeleteTourCommand";
+import { VsCodeDeleteTourUserInterface } from "./presentation/commands/VsCodeDeleteTourUserInterface";
+import { DeleteTour } from "./application/tours/DeleteTour";
 import { createTourEditorHost, EditTourCommand } from "./presentation/commands/EditTourCommand";
+import { ListAnchors } from "./application/anchors/ListAnchors";
+import { SourceSelectionTracker } from "./presentation/editor/SourceSelectionTracker";
 import { RefreshDiagnosticsAfterUpdate } from "./presentation/commands/RefreshDiagnosticsAfterUpdate";
 import { ShowFlowDiagramCommand } from "./presentation/commands/ShowFlowDiagramCommand";
 import { TourEditorPanel } from "./presentation/editor/TourEditorPanel";
@@ -42,7 +47,7 @@ import { TourEditorSerializer } from "./presentation/editor/TourEditorSerializer
 import { VsCodeEditTourUserInterface } from "./presentation/commands/VsCodeEditTourUserInterface";
 import { VsCodeShowFlowDiagramUserInterface } from "./presentation/commands/VsCodeShowFlowDiagramUserInterface";
 import { TourFlowDiagramView } from "./presentation/flow/TourFlowDiagramView";
-import { CreateAnchorCommand } from "./presentation/commands/CreateAnchorCommand";
+import { CreateAnchorAuthor, CreateAnchorCommand } from "./presentation/commands/CreateAnchorCommand";
 import { RepairAnchorCommand } from "./presentation/commands/RepairAnchorCommand";
 import { DiscoverAnchorRepairsCommand } from "./presentation/commands/DiscoverAnchorRepairsCommand";
 import { PlaySampleTourCommand } from "./presentation/commands/PlaySampleTourCommand";
@@ -92,8 +97,9 @@ export function activate(context: ExtensionContext): void {
     new VsCodeCreateTourUserInterface(),
     logger,
   );
+  const createAnchorUseCase = new CreateAnchor(new DefaultSemanticAnchorAdapter(), anchorRegistryResolver);
   const createAnchorCommand = new CreateAnchorCommand(
-    new CreateAnchor(new DefaultSemanticAnchorAdapter(), anchorRegistryResolver),
+    createAnchorUseCase,
     new VsCodeCreateAnchorUserInterface(),
     logger,
   );
@@ -184,15 +190,27 @@ export function activate(context: ExtensionContext): void {
     logger,
   );
   TourEditorPanel.register(context);
-  const loadTourDraft = new LoadTourDraft(storageResolver, anchorRegistryResolver);
-  const updateTour = new RefreshDiagnosticsAfterUpdate(
-    new UpdateTour(storageResolver, anchorRegistryResolver),
-    () => diagnostics.refresh(),
-  );
+  const listAnchors = new ListAnchors(anchorRegistryResolver);
+  const loadTourDraft = new LoadTourDraft(storageResolver, listAnchors);
+  const selectionTracker = new SourceSelectionTracker(context);
+  const editorDependencies = {
+    updateTour: new RefreshDiagnosticsAfterUpdate(
+      new UpdateTour(storageResolver, anchorRegistryResolver),
+      () => diagnostics.refresh(),
+    ),
+    listAnchors,
+    // The editing screen is a webview, so the anchor comes from the last source selection.
+    anchorAuthor: new CreateAnchorAuthor(
+      createAnchorUseCase,
+      new VsCodeCreateAnchorUserInterface(() => selectionTracker.capture()),
+      logger,
+    ),
+    logger,
+  };
   const editTourCommand = new EditTourCommand(
     listTours,
     loadTourDraft,
-    updateTour,
+    editorDependencies,
     new VsCodeEditTourUserInterface(),
     logger,
   );
@@ -200,8 +218,14 @@ export function activate(context: ExtensionContext): void {
     context,
     async (scope, id) => ({
       draft: await loadTourDraft.execute(scope, id),
-      host: createTourEditorHost(scope, id, updateTour, logger),
+      host: createTourEditorHost(scope, id, editorDependencies),
     }),
+    logger,
+  );
+  const deleteTourCommand = new DeleteTourCommand(
+    listTours,
+    new DeleteTour(storageResolver),
+    new VsCodeDeleteTourUserInterface(),
     logger,
   );
   const showFlowDiagramCommand = new ShowFlowDiagramCommand(
@@ -236,6 +260,10 @@ export function activate(context: ExtensionContext): void {
     }),
     commands.registerCommand("konstelia.browseTours", () => browseToursCommand.execute()),
     commands.registerCommand("konstelia.editTour", () => editTourCommand.execute()),
+    commands.registerCommand("konstelia.deleteTour", async () => {
+      await deleteTourCommand.execute();
+      await diagnostics.refresh();
+    }),
     commands.registerCommand("konstelia.showFlowDiagram", () => showFlowDiagramCommand.execute()),
     commands.registerCommand("konstelia.playTour", () => playTourCommand.execute()),
     commands.registerCommand("konstelia.playSampleTour", () => playSampleTourCommand.execute()),
