@@ -1,7 +1,7 @@
 import type { TourAnchor } from "../../domain/tour/TourAnchor";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import type { TourScope } from "../../domain/tour/TourScope";
-import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
+import type { TourStorageResolver } from "./TourStorage";
 import type { TourAnchorRegistryResolver } from "./TourAnchorRegistry";
 
 export interface ScopedTourSample {

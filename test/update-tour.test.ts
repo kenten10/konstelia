@@ -8,8 +8,8 @@ import { TourScope } from "../src/domain/tour/TourScope";
 import type {
   StoredTourFile,
   TourStorageProvider,
-} from "../src/infrastructure/storage/TourStorageProvider";
-import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
+} from "../src/application/tours/TourStorage";
+import type { TourStorageResolver } from "../src/application/tours/TourStorage";
 
 function storedTour(tour: TourDocument): StoredTourFile {
   return {

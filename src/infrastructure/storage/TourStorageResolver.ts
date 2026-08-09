@@ -1,9 +1,8 @@
 import type { TourScope } from "../../domain/tour/TourScope";
-import type { TourStorageProvider } from "./TourStorageProvider";
-
-export interface TourStorageResolver {
-  resolve(scope: TourScope): TourStorageProvider;
-}
+import type {
+  TourStorageProvider,
+  TourStorageResolver,
+} from "../../application/tours/TourStorage";
 
 export class DefaultTourStorageResolver implements TourStorageResolver {
   private readonly providers: ReadonlyMap<TourScope, TourStorageProvider>;

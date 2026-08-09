@@ -1,6 +1,6 @@
 import { Uri, window, workspace, type QuickPickItem } from "vscode";
 import type { TourScope } from "../../domain/tour/TourScope";
-import type { TourSummary } from "../../infrastructure/storage/TourStorageProvider";
+import type { TourSummary } from "../../application/tours/TourStorage";
 import type {
   BrowseScopeChoice,
   BrowseToursUserInterface,

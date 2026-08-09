@@ -10,17 +10,11 @@ import type {
   TourSourceBindingStore,
 } from "../../application/tours/TourSourceBinding";
 import { AnchorHealth } from "../../domain/tour/TourAnchor";
-import { TourScope } from "../../domain/tour/TourScope";
+import { tourScopeChoices, TourScope, type TourScopeChoice } from "../../domain/tour/TourScope";
 import type { Logger } from "../../shared/logging/Logger";
 
-export interface PlayTourScopeChoice {
-  label: string;
-  description: string;
-  scope: TourScope;
-}
-
 export interface PlayTourUserInterface {
-  chooseScope(choices: readonly PlayTourScopeChoice[]): Promise<TourScope | undefined>;
+  chooseScope(choices: readonly TourScopeChoice[]): Promise<TourScope | undefined>;
   chooseTour(tours: readonly PlayableTourSummary[]): Promise<PlayableTourSummary | undefined>;
   getCurrentSourceWorkspace(): SourceWorkspace | undefined;
   confirmPersonalSourceBinding(
@@ -34,12 +28,6 @@ export interface PlayTourUserInterface {
 
 export type PlayableTourSummary = MaybeHealthyTourSummary;
 
-const scopeChoices: readonly PlayTourScopeChoice[] = [
-  { label: "Personal", description: "Private tours for this VS Code user", scope: TourScope.Personal },
-  { label: "Workspace", description: "Private tours for this workspace", scope: TourScope.Workspace },
-  { label: "Repository", description: "Tours shared with repository collaborators", scope: TourScope.Repository },
-];
-
 export class PlayTourCommand {
   public constructor(
     private readonly listTours: TourLister,
@@ -51,7 +39,7 @@ export class PlayTourCommand {
   ) {}
 
   public async execute(): Promise<void> {
-    const scope = await this.userInterface.chooseScope(scopeChoices);
+    const scope = await this.userInterface.chooseScope(tourScopeChoices);
     if (!scope) {
       return;
     }

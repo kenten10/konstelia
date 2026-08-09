@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ListTours } from "../src/application/tours/ListTours";
 import { TourScope } from "../src/domain/tour/TourScope";
-import type { TourSummary } from "../src/infrastructure/storage/TourStorageProvider";
+import type { TourSummary } from "../src/application/tours/TourStorage";
 import {
   BrowseToursCommand,
   type BrowseToursUserInterface,

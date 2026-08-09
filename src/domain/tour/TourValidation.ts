@@ -14,6 +14,32 @@ export interface TourCatalogIssue extends TourValidationIssue {
   key: string;
 }
 
+/** One wording for a reference no registry entry answers, wherever it is reported. */
+export function missingAnchorMessage(ref: string): string {
+  return `Anchor '${ref}' does not exist in the registry.`;
+}
+
+/** Every hop reference the given registry cannot resolve, with the path that names it. */
+export function missingAnchorReferences(
+  tour: TourDocument,
+  knownAnchors: ReadonlySet<string>,
+): TourValidationIssue[] {
+  const issues: TourValidationIssue[] = [];
+  for (const [stepIndex, step] of tour.steps.entries()) {
+    for (const [hopIndex, hop] of step.hops.entries()) {
+      for (const [anchorIndex, reference] of hop.anchors.entries()) {
+        if (!knownAnchors.has(reference.ref)) {
+          issues.push({
+            path: `steps[${stepIndex}].hops[${hopIndex}].anchors[${anchorIndex}].ref`,
+            message: missingAnchorMessage(reference.ref),
+          });
+        }
+      }
+    }
+  }
+  return issues;
+}
+
 export function validateTourDocument(value: unknown): TourValidationIssue[] {
   const issues: TourValidationIssue[] = [];
   if (!isRecord(value)) {

@@ -21,6 +21,10 @@ export interface StoredTourFile {
   issues: readonly TourValidationIssue[];
 }
 
+/**
+ * What the use cases need from tour storage. The implementations live in `infrastructure`;
+ * the port lives here so the dependency points inwards.
+ */
 export interface TourStorageProvider {
   readonly scope: TourScope;
   saveTour(tour: TourDocument): Promise<TourLocation>;
@@ -31,4 +35,8 @@ export interface TourStorageProvider {
   listTours(): Promise<TourSummary[]>;
   scanTours(): Promise<StoredTourFile[]>;
   deleteTour(id: string): Promise<void>;
+}
+
+export interface TourStorageResolver {
+  resolve(scope: TourScope): TourStorageProvider;
 }

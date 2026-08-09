@@ -18,8 +18,7 @@ import type { AnchorRepairTarget } from "../../application/anchors/DiscoverAncho
 import type { ProposeAnchorInput } from "../../application/anchors/CreateAnchor";
 import { formatAnchorReference } from "../../domain/tour/AnchorReference";
 import { AnchorHealth, type TourAnchor } from "../../domain/tour/TourAnchor";
-import type { TourScope } from "../../domain/tour/TourScope";
-import type { AnchorScopeChoice } from "./CreateAnchorCommand";
+import type { TourScope, TourScopeChoice } from "../../domain/tour/TourScope";
 import type { RepairAnchorUserInterface } from "./RepairAnchorCommand";
 import type { DiscoverAnchorRepairsUserInterface } from "./DiscoverAnchorRepairsCommand";
 import type { SourceWorkspace } from "../../application/tours/TourSourceBinding";
@@ -65,7 +64,7 @@ export class VsCodeRepairAnchorUserInterface implements
     return folder ? { uri: folder.uri.toString(), name: folder.name } : undefined;
   }
 
-  public async chooseScope(choices: readonly AnchorScopeChoice[]): Promise<TourScope | undefined> {
+  public async chooseScope(choices: readonly TourScopeChoice[]): Promise<TourScope | undefined> {
     const items: ScopeItem[] = choices.map((choice) => ({ ...choice }));
     return (await window.showQuickPick(items, {
       placeHolder: "Choose the scope containing the anchor",

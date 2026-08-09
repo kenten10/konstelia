@@ -33,6 +33,7 @@ import {
   type PlaybackAction,
   type PlaybackPosition,
 } from "../../application/tours/TourPlaybackActions";
+import { missingAnchorMessage } from "../../domain/tour/TourValidation";
 import { AnchorHealth, type TourAnchor } from "../../domain/tour/TourAnchor";
 import { assertSafeTourSourcePath } from "../../domain/tour/TourSourcePath";
 import type { TourScope } from "../../domain/tour/TourScope";
@@ -261,7 +262,7 @@ export class VsCodeTourPlayback {
       if (!anchor) {
         prepared.set(id, {
           health: AnchorHealth.Broken,
-          reason: `Anchor '${id}' is missing from the registry.`,
+          reason: missingAnchorMessage(id),
         });
         continue;
       }

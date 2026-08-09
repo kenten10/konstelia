@@ -1,6 +1,7 @@
 import type { ListTours } from "../../application/tours/ListTours";
-import { TourScope } from "../../domain/tour/TourScope";
-import type { TourSummary } from "../../infrastructure/storage/TourStorageProvider";
+import type { TourScope } from "../../domain/tour/TourScope";
+import { tourScopeChoices } from "../../domain/tour/TourScope";
+import type { TourSummary } from "../../application/tours/TourStorage";
 import type { Logger } from "../../shared/logging/Logger";
 
 export interface BrowseScopeChoice {
@@ -17,12 +18,6 @@ export interface BrowseToursUserInterface {
   showError(message: string): Promise<void>;
 }
 
-const scopeChoices: readonly BrowseScopeChoice[] = [
-  { label: "Personal", description: "Private tours for this VS Code user", scope: TourScope.Personal },
-  { label: "Workspace", description: "Private tours for this workspace", scope: TourScope.Workspace },
-  { label: "Repository", description: "Tours shared with repository collaborators", scope: TourScope.Repository },
-];
-
 export class BrowseToursCommand {
   public constructor(
     private readonly listTours: ListTours,
@@ -31,7 +26,7 @@ export class BrowseToursCommand {
   ) {}
 
   public async execute(): Promise<void> {
-    const scope = await this.userInterface.chooseScope(scopeChoices);
+    const scope = await this.userInterface.chooseScope(tourScopeChoices);
     if (!scope) {
       return;
     }

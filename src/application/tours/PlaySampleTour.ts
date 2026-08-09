@@ -1,5 +1,5 @@
 import { TourScope } from "../../domain/tour/TourScope";
-import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
+import type { TourStorageResolver } from "./TourStorage";
 import type { TourAnchorRegistry } from "./TourAnchorRegistry";
 import type { TourPlayback } from "./TourPlayback";
 

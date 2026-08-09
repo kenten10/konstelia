@@ -6,8 +6,8 @@ import type {
 } from "../src/application/tours/TourAnchorRegistry";
 import { ValidateTourCatalog } from "../src/application/tours/ValidateTourCatalog";
 import { TourScope } from "../src/domain/tour/TourScope";
-import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
-import type { TourStorageProvider } from "../src/infrastructure/storage/TourStorageProvider";
+import type { TourStorageResolver } from "../src/application/tours/TourStorage";
+import type { TourStorageProvider } from "../src/application/tours/TourStorage";
 
 describe("ValidateTourCatalog", () => {
   it("reports missing anchor references from the selected scope", async () => {
@@ -63,7 +63,7 @@ describe("ValidateTourCatalog", () => {
 
     assert.deepEqual(result[0]?.issues, [{
       path: "steps[0].hops[0].anchors[0].ref",
-      message: "Anchor 'missing' does not exist in workspace storage.",
+      message: "Anchor 'missing' does not exist in the registry.",
     }]);
   });
 });

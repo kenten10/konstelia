@@ -3,6 +3,7 @@ import type { SemanticAnchorAdapter } from "../anchors/SemanticAnchorAdapter";
 import { AnchorHealth, type TourAnchor } from "../../domain/tour/TourAnchor";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import {
+  missingAnchorReferences,
   validateTourCatalog,
   type TourValidationIssue,
 } from "../../domain/tour/TourValidation";
@@ -103,7 +104,8 @@ export class ValidateTourProject {
       }
       // Anchor problems are reported, but only `assessTourAnchors` decides the health, so a
       // broken secondary stays drifted instead of blocking the tour (specification §7.3, §7.4).
-      const anchorIssues = missingAnchorIssues(entry.file, entry.tour, assessments);
+      const anchorIssues = missingAnchorReferences(entry.tour, new Set(assessments.keys()))
+        .map((issue) => ({ file: entry.file, ...issue }));
       const assessment = assessTourAnchors(entry.tour, assessments);
       return {
         file: entry.file,
@@ -150,28 +152,6 @@ function groupIssues(issues: readonly TourProjectIssue[]): ReadonlyMap<string, T
     grouped.set(issue.file, entries);
   }
   return grouped;
-}
-
-function missingAnchorIssues(
-  file: string,
-  tour: TourDocument,
-  assessments: ReadonlyMap<string, AnchorAssessment>,
-): TourProjectIssue[] {
-  const issues: TourProjectIssue[] = [];
-  for (const [stepIndex, step] of tour.steps.entries()) {
-    for (const [hopIndex, hop] of step.hops.entries()) {
-      for (const [anchorIndex, reference] of hop.anchors.entries()) {
-        if (!assessments.has(reference.ref)) {
-          issues.push({
-            file,
-            path: `steps[${stepIndex}].hops[${hopIndex}].anchors[${anchorIndex}].ref`,
-            message: `Anchor '${reference.ref}' does not exist.`,
-          });
-        }
-      }
-    }
-  }
-  return issues;
 }
 
 function combineHealth(states: readonly AnchorHealth[]): AnchorHealth {

@@ -10,7 +10,7 @@ import type {
   TourLocation,
   TourStorageProvider,
   TourSummary,
-} from "./TourStorageProvider";
+} from "../../application/tours/TourStorage";
 import {
   deserializeTour,
   serializeTour,

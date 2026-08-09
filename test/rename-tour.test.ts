@@ -4,7 +4,7 @@ import { RenameTour } from "../src/application/tours/RenameTour";
 import { TourScope } from "../src/domain/tour/TourScope";
 import { PersonalTourStorageProvider } from "../src/infrastructure/storage/PersonalTourStorageProvider";
 import { DefaultTourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
-import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
+import type { TourStorageResolver } from "../src/application/tours/TourStorage";
 import { InMemoryFileSystem, uri } from "./fakes";
 
 async function createProject() {

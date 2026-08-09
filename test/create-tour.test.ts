@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { CreateTour } from "../src/application/tours/CreateTour";
 import { TourScope } from "../src/domain/tour/TourScope";
-import type { TourStorageProvider } from "../src/infrastructure/storage/TourStorageProvider";
+import type { TourStorageProvider } from "../src/application/tours/TourStorage";
 import { DefaultTourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
 import { PersonalTourStorageProvider } from "../src/infrastructure/storage/PersonalTourStorageProvider";
 import { InMemoryFileSystem, uri } from "./fakes";

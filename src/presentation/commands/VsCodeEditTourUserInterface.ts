@@ -1,10 +1,9 @@
 import { window, type QuickPickItem } from "vscode";
 import type { TourDraft } from "../../application/tours/LoadTourDraft";
-import type { TourScope } from "../../domain/tour/TourScope";
-import type { TourSummary } from "../../infrastructure/storage/TourStorageProvider";
+import type { TourScope, TourScopeChoice } from "../../domain/tour/TourScope";
+import type { TourSummary } from "../../application/tours/TourStorage";
 import { TourEditorPanel } from "../editor/TourEditorPanel";
 import type {
-  EditTourScopeChoice,
   EditTourUserInterface,
   TourEditorHost,
 } from "./EditTourCommand";
@@ -18,7 +17,7 @@ interface TourItem extends QuickPickItem {
 }
 
 export class VsCodeEditTourUserInterface implements EditTourUserInterface {
-  public async chooseScope(choices: readonly EditTourScopeChoice[]): Promise<TourScope | undefined> {
+  public async chooseScope(choices: readonly TourScopeChoice[]): Promise<TourScope | undefined> {
     const items: ScopeItem[] = choices.map((choice) => ({ ...choice }));
     return (await window.showQuickPick(items, { placeHolder: "Choose a tour scope" }))?.scope;
   }

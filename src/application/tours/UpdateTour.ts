@@ -1,13 +1,14 @@
 import { normalizeTourDocument, type TourDocument } from "../../domain/tour/TourDocument";
 import type { TourScope } from "../../domain/tour/TourScope";
 import {
+  missingAnchorReferences,
   validateTourCatalog,
   validateTourDocument,
   type CatalogTour,
   type TourValidationIssue,
 } from "../../domain/tour/TourValidation";
-import type { TourLocation } from "../../infrastructure/storage/TourStorageProvider";
-import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
+import type { TourLocation } from "./TourStorage";
+import type { TourStorageResolver } from "./TourStorage";
 import type { TourAnchorRegistryResolver } from "./TourAnchorRegistry";
 
 export interface UpdateTourInput {
@@ -64,7 +65,7 @@ export class UpdateTour implements UpdateTourUseCase {
     }
     const anchors = await this.anchorRegistryResolver.resolve(input.scope).loadAnchors();
     const knownAnchors = new Set(anchors.map((anchor) => anchor.id));
-    const issues = [...missingAnchorIssues(tour, knownAnchors)];
+    const issues = missingAnchorReferences(tour, knownAnchors);
 
     const key = target.location.uri.toString();
     const entries: CatalogTour[] = files.flatMap((file) => {
@@ -81,24 +82,4 @@ export class UpdateTour implements UpdateTourUseCase {
     }
     return { issues, tour };
   }
-}
-
-function missingAnchorIssues(
-  tour: TourDocument,
-  knownAnchors: ReadonlySet<string>,
-): TourValidationIssue[] {
-  const issues: TourValidationIssue[] = [];
-  for (const [stepIndex, step] of tour.steps.entries()) {
-    for (const [hopIndex, hop] of step.hops.entries()) {
-      for (const [anchorIndex, anchor] of hop.anchors.entries()) {
-        if (!knownAnchors.has(anchor.ref)) {
-          issues.push({
-            path: `steps[${stepIndex}].hops[${hopIndex}].anchors[${anchorIndex}].ref`,
-            message: `Anchor '${anchor.ref}' does not exist in the registry.`,
-          });
-        }
-      }
-    }
-  }
-  return issues;
 }

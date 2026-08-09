@@ -16,6 +16,10 @@ All notable changes to Konstelia are documented in this file. The format follows
   `konstelia.flowDiagram.revealOnPlayback`) and themable playback highlight colors
   (`konstelia.primaryAnchorBackground`, `konstelia.secondaryAnchorBackground`).
 
+### Changed
+
+- A reference no anchor registry answers is now reported with the same wording everywhere.
+
 ## 0.1.0 - 2026-08-09
 
 ### Added

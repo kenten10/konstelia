@@ -6,15 +6,15 @@ import type {
 import type { ProposeAnchorInput } from "../../application/anchors/CreateAnchor";
 import type { AnchorRepairAuthorizer } from "../../application/anchors/AuthorizeAnchorRepair";
 import { formatAnchorReference } from "../../domain/tour/AnchorReference";
-import { TourScope } from "../../domain/tour/TourScope";
+import type { TourScope} from "../../domain/tour/TourScope";
+import { anchorScopeChoices, type TourScopeChoice } from "../../domain/tour/TourScope";
 import type { Logger } from "../../shared/logging/Logger";
-import type { AnchorScopeChoice } from "./CreateAnchorCommand";
 import type { SourceWorkspace } from "../../application/tours/TourSourceBinding";
 
 export interface RepairAnchorUserInterface {
   captureSelection(): Promise<ProposeAnchorInput | undefined>;
   getCurrentSourceWorkspace(): SourceWorkspace | undefined;
-  chooseScope(choices: readonly AnchorScopeChoice[]): Promise<TourScope | undefined>;
+  chooseScope(choices: readonly TourScopeChoice[]): Promise<TourScope | undefined>;
   chooseAnchor(candidates: readonly RepairAnchorCandidate[]): Promise<RepairAnchorCandidate | undefined>;
   confirmRebind(
     candidate: RepairAnchorCandidate,
@@ -24,12 +24,6 @@ export interface RepairAnchorUserInterface {
   showSuccess(message: string): Promise<void>;
   showError(message: string): Promise<void>;
 }
-
-const scopeChoices: readonly AnchorScopeChoice[] = [
-  { label: "Personal", description: "Private to your VS Code user", scope: TourScope.Personal },
-  { label: "Workspace", description: "Private to this workspace", scope: TourScope.Workspace },
-  { label: "Repository", description: "Shared with repository collaborators", scope: TourScope.Repository },
-];
 
 export class RepairAnchorCommand {
   public constructor(
@@ -43,7 +37,7 @@ export class RepairAnchorCommand {
     try {
       const selection = await this.userInterface.captureSelection();
       if (!selection) return;
-      const scope = await this.userInterface.chooseScope(scopeChoices);
+      const scope = await this.userInterface.chooseScope(anchorScopeChoices);
       if (!scope) return;
       const preparation = await this.repairAnchor.prepare(scope, selection);
       if (preparation.candidates.length === 0) {

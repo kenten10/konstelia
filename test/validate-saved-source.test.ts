@@ -10,8 +10,8 @@ import { AnchorHealth, type TourAnchor } from "../src/domain/tour/TourAnchor";
 import type { TourDocument } from "../src/domain/tour/TourDocument";
 import { TourScope } from "../src/domain/tour/TourScope";
 import { TypeScriptAnchorAdapter } from "../src/infrastructure/language/TypeScriptAnchorAdapter";
-import type { TourStorageProvider } from "../src/infrastructure/storage/TourStorageProvider";
-import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
+import type { TourStorageProvider } from "../src/application/tours/TourStorage";
+import type { TourStorageResolver } from "../src/application/tours/TourStorage";
 
 const tour: TourDocument = {
   id: "auth-tour",

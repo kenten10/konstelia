@@ -1,6 +1,6 @@
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import type { TourScope } from "../../domain/tour/TourScope";
-import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
+import type { TourStorageResolver } from "./TourStorage";
 
 export interface TourRenamePlan {
   readonly id: string;

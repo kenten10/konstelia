@@ -5,7 +5,7 @@ import type { SemanticAnchorAdapter, AnchorOffsetRange } from "../anchors/Semant
 import { AnchorHealth } from "../../domain/tour/TourAnchor";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import { TourScope } from "../../domain/tour/TourScope";
-import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
+import type { TourStorageResolver } from "./TourStorage";
 import type { TourAnchorRegistryResolver } from "./TourAnchorRegistry";
 
 export interface ValidateSavedSourceInput {

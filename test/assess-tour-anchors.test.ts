@@ -49,6 +49,6 @@ describe("assessTourAnchors", () => {
     ]));
 
     assert.equal(result.health, AnchorHealth.Drifted);
-    assert.match(result.warnings[0]?.reason ?? "", /missing from the registry/);
+    assert.match(result.warnings[0]?.reason ?? "", /does not exist in the registry/);
   });
 });

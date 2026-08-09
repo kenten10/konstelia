@@ -1,10 +1,11 @@
 import type { TourScope } from "../../domain/tour/TourScope";
 import {
+  missingAnchorMessage,
   validateTourCatalog,
   type TourValidationIssue,
 } from "../../domain/tour/TourValidation";
-import type { TourLocation } from "../../infrastructure/storage/TourStorageProvider";
-import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
+import type { TourLocation } from "./TourStorage";
+import type { TourStorageResolver } from "./TourStorage";
 import type { TourAnchorRegistryResolver } from "./TourAnchorRegistry";
 
 export interface TourFileValidation {
@@ -44,7 +45,7 @@ export class ValidateTourCatalog {
             if (!anchorIds.has(anchor.ref)) {
               issuesByKey.get(file.location.uri.toString())?.push({
                 path: `steps[${stepIndex}].hops[${hopIndex}].anchors[${anchorIndex}].ref`,
-                message: `Anchor '${anchor.ref}' does not exist in ${scope} storage.`,
+                message: missingAnchorMessage(anchor.ref),
               });
             }
           }

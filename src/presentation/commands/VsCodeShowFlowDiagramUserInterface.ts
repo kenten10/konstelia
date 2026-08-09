@@ -2,12 +2,9 @@ import { window, type QuickPickItem } from "vscode";
 import type { MaybeHealthyTourSummary } from "../../application/tours/ListToursWithHealth";
 import type { TourFlowSnapshot } from "../../application/tours/LoadTourFlow";
 import { AnchorHealth } from "../../domain/tour/TourAnchor";
-import type { TourScope } from "../../domain/tour/TourScope";
+import type { TourScope, TourScopeChoice } from "../../domain/tour/TourScope";
 import type { TourFlowDiagramView } from "../flow/TourFlowDiagramView";
-import type {
-  ShowFlowDiagramScopeChoice,
-  ShowFlowDiagramUserInterface,
-} from "./ShowFlowDiagramCommand";
+import type { ShowFlowDiagramUserInterface } from "./ShowFlowDiagramCommand";
 
 interface ScopeItem extends QuickPickItem {
   scope: TourScope;
@@ -21,7 +18,7 @@ export class VsCodeShowFlowDiagramUserInterface implements ShowFlowDiagramUserIn
   public constructor(private readonly view: TourFlowDiagramView) {}
 
   public async chooseScope(
-    choices: readonly ShowFlowDiagramScopeChoice[],
+    choices: readonly TourScopeChoice[],
   ): Promise<TourScope | undefined> {
     const items: ScopeItem[] = choices.map((choice) => ({ ...choice }));
     return (await window.showQuickPick(items, { placeHolder: "Choose a tour scope" }))?.scope;

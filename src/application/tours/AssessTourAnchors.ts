@@ -1,3 +1,4 @@
+import { missingAnchorMessage } from "../../domain/tour/TourValidation";
 import { AnchorHealth } from "../../domain/tour/TourAnchor";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 
@@ -32,7 +33,7 @@ export function assessTourAnchors(
       for (const reference of hop.anchors) {
         const assessment = anchors.get(reference.ref) ?? {
           health: AnchorHealth.Broken,
-          reason: `Anchor '${reference.ref}' is missing from the registry.`,
+          reason: missingAnchorMessage(reference.ref),
         };
         if (assessment.health === AnchorHealth.Healthy) {
           continue;

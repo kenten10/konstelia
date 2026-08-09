@@ -1,29 +1,18 @@
 import type { AnchorProposal, CreateAnchor, ProposeAnchorInput } from "../../application/anchors/CreateAnchor";
 import { formatAnchorReference } from "../../domain/tour/AnchorReference";
 import type { TourAnchor } from "../../domain/tour/TourAnchor";
-import { TourScope } from "../../domain/tour/TourScope";
+import type { TourScope} from "../../domain/tour/TourScope";
+import { anchorScopeChoices, type TourScopeChoice } from "../../domain/tour/TourScope";
 import type { Logger } from "../../shared/logging/Logger";
-
-export interface AnchorScopeChoice {
-  label: string;
-  description: string;
-  scope: TourScope;
-}
 
 export interface CreateAnchorUserInterface {
   captureSelection(): Promise<ProposeAnchorInput | undefined>;
   confirmSnappedTarget(proposal: AnchorProposal): Promise<boolean>;
-  chooseScope(choices: readonly AnchorScopeChoice[]): Promise<TourScope | undefined>;
+  chooseScope(choices: readonly TourScopeChoice[]): Promise<TourScope | undefined>;
   askForId(suggestedId: string): Promise<string | undefined>;
   showSuccess(message: string): Promise<void>;
   showError(message: string): Promise<void>;
 }
-
-const scopeChoices: readonly AnchorScopeChoice[] = [
-  { label: "Personal", description: "Private to your VS Code user", scope: TourScope.Personal },
-  { label: "Workspace", description: "Private to this workspace", scope: TourScope.Workspace },
-  { label: "Repository", description: "Shared with repository collaborators", scope: TourScope.Repository },
-];
 
 /**
  * Turns the current selection into an anchor in a known scope. The command asks for the scope
@@ -82,7 +71,7 @@ export class CreateAnchorCommand {
       if (!proposal) {
         return;
       }
-      const scope = await this.userInterface.chooseScope(scopeChoices);
+      const scope = await this.userInterface.chooseScope(anchorScopeChoices);
       if (!scope) {
         return;
       }

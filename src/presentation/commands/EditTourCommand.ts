@@ -3,16 +3,11 @@ import type { LoadTourDraftUseCase, TourDraft } from "../../application/tours/Lo
 import type { TourLister } from "../../application/tours/ListTours";
 import type { UpdateTourUseCase } from "../../application/tours/UpdateTour";
 import type { TourDocument } from "../../domain/tour/TourDocument";
-import { TourScope } from "../../domain/tour/TourScope";
+import type { TourScope} from "../../domain/tour/TourScope";
+import { tourScopeChoices, type TourScopeChoice } from "../../domain/tour/TourScope";
 import type { TourValidationIssue } from "../../domain/tour/TourValidation";
-import type { TourSummary } from "../../infrastructure/storage/TourStorageProvider";
+import type { TourSummary } from "../../application/tours/TourStorage";
 import type { Logger } from "../../shared/logging/Logger";
-
-export interface EditTourScopeChoice {
-  label: string;
-  description: string;
-  scope: TourScope;
-}
 
 export interface CreatedTourAnchor {
   readonly id: string;
@@ -33,18 +28,12 @@ export interface TourEditorHost {
 }
 
 export interface EditTourUserInterface {
-  chooseScope(choices: readonly EditTourScopeChoice[]): Promise<TourScope | undefined>;
+  chooseScope(choices: readonly TourScopeChoice[]): Promise<TourScope | undefined>;
   chooseTour(tours: readonly TourSummary[]): Promise<TourSummary | undefined>;
   openEditor(draft: TourDraft, host: TourEditorHost): Promise<void>;
   showInformation(message: string): Promise<void>;
   showError(message: string): Promise<void>;
 }
-
-const scopeChoices: readonly EditTourScopeChoice[] = [
-  { label: "Personal", description: "Private tours for this VS Code user", scope: TourScope.Personal },
-  { label: "Workspace", description: "Private tours for this workspace", scope: TourScope.Workspace },
-  { label: "Repository", description: "Tours shared with repository collaborators", scope: TourScope.Repository },
-];
 
 export interface TourEditorDependencies {
   readonly updateTour: UpdateTourUseCase;
@@ -63,7 +52,7 @@ export class EditTourCommand {
   ) {}
 
   public async execute(): Promise<void> {
-    const scope = await this.userInterface.chooseScope(scopeChoices);
+    const scope = await this.userInterface.chooseScope(tourScopeChoices);
     if (!scope) {
       return;
     }

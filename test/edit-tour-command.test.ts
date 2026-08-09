@@ -12,7 +12,7 @@ import {
   type TourEditorDependencies,
   type TourEditorHost,
 } from "../src/presentation/commands/EditTourCommand";
-import type { TourSummary } from "../src/infrastructure/storage/TourStorageProvider";
+import type { TourSummary } from "../src/application/tours/TourStorage";
 import type { Logger } from "../src/shared/logging/Logger";
 
 const tour: TourDocument = {

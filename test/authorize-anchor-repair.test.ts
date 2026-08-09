@@ -5,7 +5,7 @@ import type { TourAnchorRegistryResolver } from "../src/application/tours/TourAn
 import type { TourSourceBindingStore } from "../src/application/tours/TourSourceBinding";
 import type { TourDocument } from "../src/domain/tour/TourDocument";
 import { TourScope } from "../src/domain/tour/TourScope";
-import type { TourStorageResolver } from "../src/infrastructure/storage/TourStorageResolver";
+import type { TourStorageResolver } from "../src/application/tours/TourStorage";
 
 describe("AuthorizeAnchorRepair", () => {
   it("allows a personal anchor only in the workspace shared by all referencing tours", async () => {

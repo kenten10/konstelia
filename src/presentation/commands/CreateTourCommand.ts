@@ -3,7 +3,7 @@ import type {
   SourceWorkspace,
   TourSourceBindingStore,
 } from "../../application/tours/TourSourceBinding";
-import { TourScope } from "../../domain/tour/TourScope";
+import { tourScopeChoices, TourScope } from "../../domain/tour/TourScope";
 import type { Logger } from "../../shared/logging/Logger";
 
 export interface ScopeChoice {
@@ -21,12 +21,6 @@ export interface CreateTourUserInterface {
   showError(message: string): Promise<void>;
 }
 
-const scopeChoices: readonly ScopeChoice[] = [
-  { label: "Personal", scope: TourScope.Personal, description: "Private to your VS Code user" },
-  { label: "Workspace", scope: TourScope.Workspace, description: "Private to this workspace" },
-  { label: "Repository", scope: TourScope.Repository, description: "Shared with repository collaborators" },
-];
-
 export class CreateTourCommand {
   public constructor(
     private readonly createTour: CreateTourUseCase,
@@ -36,7 +30,7 @@ export class CreateTourCommand {
   ) {}
 
   public async execute(): Promise<void> {
-    const scope = await this.userInterface.chooseScope(scopeChoices);
+    const scope = await this.userInterface.chooseScope(tourScopeChoices);
     if (!scope) {
       return;
     }

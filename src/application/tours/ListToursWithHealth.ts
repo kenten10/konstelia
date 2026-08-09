@@ -1,8 +1,9 @@
 import type { SemanticAnchorAdapter } from "../anchors/SemanticAnchorAdapter";
+import { missingAnchorMessage } from "../../domain/tour/TourValidation";
 import { AnchorHealth } from "../../domain/tour/TourAnchor";
 import type { TourScope } from "../../domain/tour/TourScope";
-import type { TourSummary } from "../../infrastructure/storage/TourStorageProvider";
-import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
+import type { TourSummary } from "./TourStorage";
+import type { TourStorageResolver } from "./TourStorage";
 import type { TourAnchorRegistryResolver } from "./TourAnchorRegistry";
 import { ValidateTourProject } from "./ValidateTourProject";
 
@@ -63,7 +64,7 @@ export class ListToursWithHealth implements TourHealthLister {
           for (const reference of hop.anchors) {
             const anchor = anchorResults.get(reference.ref);
             if (!anchor) {
-              reasons.add(`Anchor '${reference.ref}' does not exist.`);
+              reasons.add(missingAnchorMessage(reference.ref));
             } else if (anchor.health !== AnchorHealth.Healthy) {
               reasons.add(`${reference.ref}: ${anchor.reason ?? anchor.health}`);
             }

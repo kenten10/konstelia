@@ -1,6 +1,6 @@
 import type { TourScope } from "../../domain/tour/TourScope";
-import type { TourSummary } from "../../infrastructure/storage/TourStorageProvider";
-import type { TourStorageResolver } from "../../infrastructure/storage/TourStorageResolver";
+import type { TourSummary } from "./TourStorage";
+import type { TourStorageResolver } from "./TourStorage";
 
 export interface TourLister {
   execute(scope: TourScope): Promise<TourSummary[]>;

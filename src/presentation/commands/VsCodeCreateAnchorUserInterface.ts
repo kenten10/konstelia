@@ -1,11 +1,8 @@
 import { window, workspace, type QuickPickItem } from "vscode";
 import type { AnchorProposal, ProposeAnchorInput } from "../../application/anchors/CreateAnchor";
-import type { TourScope } from "../../domain/tour/TourScope";
+import type { TourScope, TourScopeChoice } from "../../domain/tour/TourScope";
 import { isSupportedLanguageId } from "../../infrastructure/language/SupportedLanguages";
-import type {
-  AnchorScopeChoice,
-  CreateAnchorUserInterface,
-} from "./CreateAnchorCommand";
+import type { CreateAnchorUserInterface } from "./CreateAnchorCommand";
 
 interface ScopeItem extends QuickPickItem {
   scope: TourScope;
@@ -31,7 +28,7 @@ export class VsCodeCreateAnchorUserInterface implements CreateAnchorUserInterfac
     return selected === action;
   }
 
-  public async chooseScope(choices: readonly AnchorScopeChoice[]): Promise<TourScope | undefined> {
+  public async chooseScope(choices: readonly TourScopeChoice[]): Promise<TourScope | undefined> {
     const items: ScopeItem[] = choices.map((choice) => ({
       label: choice.label,
       description: choice.description,

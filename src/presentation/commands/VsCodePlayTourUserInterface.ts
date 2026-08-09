@@ -1,10 +1,9 @@
 import { window, workspace, type QuickPickItem } from "vscode";
 import type { SourceWorkspace } from "../../application/tours/TourSourceBinding";
 import { AnchorHealth } from "../../domain/tour/TourAnchor";
-import type { TourScope } from "../../domain/tour/TourScope";
+import type { TourScope, TourScopeChoice } from "../../domain/tour/TourScope";
 import type {
   PlayableTourSummary,
-  PlayTourScopeChoice,
   PlayTourUserInterface,
 } from "./PlayTourCommand";
 
@@ -17,7 +16,7 @@ interface TourItem extends QuickPickItem {
 }
 
 export class VsCodePlayTourUserInterface implements PlayTourUserInterface {
-  public async chooseScope(choices: readonly PlayTourScopeChoice[]): Promise<TourScope | undefined> {
+  public async chooseScope(choices: readonly TourScopeChoice[]): Promise<TourScope | undefined> {
     const items: ScopeItem[] = choices.map((choice) => ({ ...choice }));
     return (await window.showQuickPick(items, { placeHolder: "Choose a tour scope" }))?.scope;
   }
