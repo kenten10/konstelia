@@ -20,6 +20,7 @@ import type {
   TourPlayback,
   TourPlaybackController,
   TourPlaybackObserver,
+  TourPlaybackRequest,
 } from "../../application/tours/TourPlayback";
 import {
   assessTourAnchors,
@@ -34,6 +35,7 @@ import {
 } from "../../application/tours/TourPlaybackActions";
 import { AnchorHealth, type TourAnchor } from "../../domain/tour/TourAnchor";
 import { assertSafeTourSourcePath } from "../../domain/tour/TourSourcePath";
+import type { TourScope } from "../../domain/tour/TourScope";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import type { RepositoryRootLocator } from "../../infrastructure/storage/RepositoryRootLocator";
 import { ResolveAnchor } from "../../application/anchors/ResolveAnchor";
@@ -71,13 +73,13 @@ const exitCommand = "konstelia.playback.exit";
 
 export class VsCodeTourPlayback {
   private readonly primaryDecoration = window.createTextEditorDecorationType({
-    backgroundColor: new ThemeColor("editor.findMatchBackground"),
+    backgroundColor: new ThemeColor("konstelia.primaryAnchorBackground"),
     fontWeight: "bold",
     overviewRulerColor: new ThemeColor("editorOverviewRuler.findMatchForeground"),
     overviewRulerLane: OverviewRulerLane.Full,
   });
   private readonly secondaryDecoration = window.createTextEditorDecorationType({
-    backgroundColor: new ThemeColor("editor.findMatchHighlightBackground"),
+    backgroundColor: new ThemeColor("konstelia.secondaryAnchorBackground"),
   });
   private readonly touchedEditors = new Set<TextEditor>();
   private currentHover: { uri: Uri; hover: Hover } | undefined;
@@ -145,25 +147,25 @@ export class VsCodeTourPlayback {
   }
 
   public forRoot(rootLocator: RepositoryRootLocator): TourPlayback {
-    return {
-      start: (tour, anchors) => this.start(rootLocator, tour, anchors),
-    };
+    return { start: (request) => this.start(rootLocator, request) };
   }
 
   private async start(
     rootLocator: RepositoryRootLocator,
-    tour: TourDocument,
-    anchors: readonly TourAnchor[],
+    { tour, anchors, scope, startAt }: TourPlaybackRequest,
   ): Promise<void> {
     if (this.running) {
       throw new Error("A tour is already running.");
     }
     const player = new TourPlayer(tour);
+    if (startAt && isPlayablePosition(tour, startAt)) {
+      player.gotoHop(startAt.stepIndex, startAt.hopIndex);
+    }
 
     this.running = true;
     try {
       const prepared = await this.prepareAnchors(tour, anchors, rootLocator);
-      this.notifyStarted(tour, player, prepared);
+      this.notifyStarted(scope, tour, player, prepared);
       await commands.executeCommand("setContext", "konstelia.tourActive", true);
       while (player.getState().status === "playing") {
         const current = player.getCurrent();
@@ -207,6 +209,7 @@ export class VsCodeTourPlayback {
   }
 
   private notifyStarted(
+    scope: TourScope,
     tour: TourDocument,
     player: TourPlayer,
     prepared: ReadonlyMap<string, PreparedAnchor>,
@@ -222,7 +225,7 @@ export class VsCodeTourPlayback {
     };
     for (const observer of this.observers) {
       try {
-        observer.onTourStarted({ tour, player, anchorHealth, controller });
+        observer.onTourStarted({ scope, tour, player, anchorHealth, controller });
       } catch {
         // A view must not be able to prevent playback from starting.
       }

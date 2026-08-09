@@ -31,7 +31,7 @@ describe("PlaySampleTour", () => {
     let playedTourId: string | undefined;
     let playedAnchors: readonly TourAnchor[] | undefined;
     const playback: TourPlayback = {
-      start: (tour, loadedAnchors) => {
+      start: ({ tour, anchors: loadedAnchors }) => {
         playedTourId = tour.id;
         playedAnchors = loadedAnchors;
         return Promise.resolve();

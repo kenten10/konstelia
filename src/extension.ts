@@ -35,6 +35,9 @@ import { VsCodeAnchorSourceCatalog } from "./infrastructure/language/VsCodeAncho
 import { BrowseToursCommand } from "./presentation/commands/BrowseToursCommand";
 import { CreateTourCommand } from "./presentation/commands/CreateTourCommand";
 import { DeleteTourCommand } from "./presentation/commands/DeleteTourCommand";
+import { RenameTourCommand } from "./presentation/commands/RenameTourCommand";
+import { VsCodeRenameTourUserInterface } from "./presentation/commands/VsCodeRenameTourUserInterface";
+import { RenameTour } from "./application/tours/RenameTour";
 import { VsCodeDeleteTourUserInterface } from "./presentation/commands/VsCodeDeleteTourUserInterface";
 import { DeleteTour } from "./application/tours/DeleteTour";
 import { createTourEditorHost, EditTourCommand } from "./presentation/commands/EditTourCommand";
@@ -145,9 +148,14 @@ export function activate(context: ExtensionContext): void {
     new VsCodeBrowseToursUserInterface(),
     logger,
   );
-  const flowDiagramView = new TourFlowDiagramView(context);
+  // The diagram can start a tour, and playback reports back to the diagram. The closure defers
+  // the lookup, so the cycle only exists in the types.
+  const flowDiagramView: TourFlowDiagramView = new TourFlowDiagramView(
+    context,
+    (scope, tourId, startAt) => playTourCommand.executeForTour(scope, tourId, startAt),
+  );
   const tourRenderer = new VsCodeTourPlayback(context, [flowDiagramView]);
-  const playTourCommand = new PlayTourCommand(
+  const playTourCommand: PlayTourCommand = new PlayTourCommand(
     listTours,
     listToursWithHealth,
     new PlayTour(storageResolver, anchorRegistryResolver, tourRenderer.forRoot(repositoryRoot)),
@@ -228,6 +236,12 @@ export function activate(context: ExtensionContext): void {
     new VsCodeDeleteTourUserInterface(),
     logger,
   );
+  const renameTourCommand = new RenameTourCommand(
+    listTours,
+    new RenameTour(storageResolver),
+    new VsCodeRenameTourUserInterface(),
+    logger,
+  );
   const showFlowDiagramCommand = new ShowFlowDiagramCommand(
     listTours,
     listToursWithHealth,
@@ -260,6 +274,10 @@ export function activate(context: ExtensionContext): void {
     }),
     commands.registerCommand("konstelia.browseTours", () => browseToursCommand.execute()),
     commands.registerCommand("konstelia.editTour", () => editTourCommand.execute()),
+    commands.registerCommand("konstelia.renameTour", async () => {
+      await renameTourCommand.execute();
+      await diagnostics.refresh();
+    }),
     commands.registerCommand("konstelia.deleteTour", async () => {
       await deleteTourCommand.execute();
       await diagnostics.refresh();

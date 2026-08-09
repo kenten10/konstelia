@@ -3,6 +3,7 @@ import type {
   TourHealthLister,
 } from "../../application/tours/ListToursWithHealth";
 import type { PlayTourUseCase } from "../../application/tours/PlayTour";
+import type { PlaybackPosition } from "../../application/tours/TourPlaybackActions";
 import type { TourLister } from "../../application/tours/ListTours";
 import type {
   SourceWorkspace,
@@ -55,38 +56,74 @@ export class PlayTourCommand {
       return;
     }
     try {
-      const tours: readonly PlayableTourSummary[] = scope === TourScope.Personal
-        ? await this.listTours.execute(scope)
-        : await this.listToursWithHealth.execute(scope);
+      const tours = await this.listPlayableTours(scope);
       if (tours.length === 0) {
         await this.userInterface.showInformation(`No ${scope} tours found.`);
         return;
       }
       const tour = await this.userInterface.chooseTour(tours);
       if (tour) {
-        if (!(await this.ensurePersonalSourceBinding(scope, tour))) {
-          return;
-        }
-        const assessedTour = scope === TourScope.Personal
-          ? (await this.listToursWithHealth.execute(scope)).find((candidate) => candidate.id === tour.id)
-          : tour;
-        if (!assessedTour) {
-          throw new Error(`Tour '${tour.id}' was not found after source binding.`);
-        }
-        if (assessedTour.health === AnchorHealth.Broken) {
-          await this.userInterface.showError(
-            `Tour '${tour.title}' is under maintenance and cannot be played. ` +
-            `${assessedTour.reasons?.join(" ") ?? ""}`.trim(),
-          );
-          return;
-        }
-        await this.playTour.execute(scope, tour.id);
+        await this.play(scope, tour);
       }
     } catch (error) {
-      this.logger.error(`Failed to play ${scope} tour`, error);
-      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
-      await this.userInterface.showError(`Could not play tour: ${message}`);
+      await this.reportFailure(scope, error);
     }
+  }
+
+  /**
+   * Plays a tour the reader picked somewhere else, such as a node in the flow diagram. The
+   * binding and health rules are the same ones the picker applies.
+   */
+  public async executeForTour(
+    scope: TourScope,
+    id: string,
+    startAt?: PlaybackPosition,
+  ): Promise<void> {
+    try {
+      const tour = (await this.listPlayableTours(scope)).find((candidate) => candidate.id === id);
+      if (!tour) {
+        throw new Error(`Tour '${id}' was not found in ${scope} storage.`);
+      }
+      await this.play(scope, tour, startAt);
+    } catch (error) {
+      await this.reportFailure(scope, error);
+    }
+  }
+
+  private listPlayableTours(scope: TourScope): Promise<readonly PlayableTourSummary[]> {
+    return scope === TourScope.Personal
+      ? this.listTours.execute(scope)
+      : this.listToursWithHealth.execute(scope);
+  }
+
+  private async play(
+    scope: TourScope,
+    tour: PlayableTourSummary,
+    startAt?: PlaybackPosition,
+  ): Promise<void> {
+    if (!(await this.ensurePersonalSourceBinding(scope, tour))) {
+      return;
+    }
+    const assessedTour = scope === TourScope.Personal
+      ? (await this.listToursWithHealth.execute(scope)).find((candidate) => candidate.id === tour.id)
+      : tour;
+    if (!assessedTour) {
+      throw new Error(`Tour '${tour.id}' was not found after source binding.`);
+    }
+    if (assessedTour.health === AnchorHealth.Broken) {
+      await this.userInterface.showError(
+        `Tour '${tour.title}' is under maintenance and cannot be played. ` +
+        `${assessedTour.reasons?.join(" ") ?? ""}`.trim(),
+      );
+      return;
+    }
+    await this.playTour.execute(scope, tour.id, startAt);
+  }
+
+  private async reportFailure(scope: TourScope, error: unknown): Promise<void> {
+    this.logger.error(`Failed to play ${scope} tour`, error);
+    const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+    await this.userInterface.showError(`Could not play tour: ${message}`);
   }
 
   private async ensurePersonalSourceBinding(

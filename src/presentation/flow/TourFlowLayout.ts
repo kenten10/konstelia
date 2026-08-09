@@ -66,18 +66,22 @@ export const flowLayoutMetrics = {
 
 /**
  * Places a flow diagram on a fixed grid: one lane per step, hops flowing left to right and
- * wrapping after `maxColumns`. The geometry is pure so the same layout can be rendered to SVG
+ * wrapping after `options.columns` (the `konstelia.flowDiagram.columns` setting). The geometry is pure so the same layout can be rendered to SVG
  * in a webview and asserted in unit tests.
  */
-export function layoutTourFlowDiagram(diagram: TourFlowDiagram): TourFlowLayout {
+export function layoutTourFlowDiagram(
+  diagram: TourFlowDiagram,
+  options: { readonly columns?: number } = {},
+): TourFlowLayout {
   const metrics = flowLayoutMetrics;
+  const columnLimit = Math.max(1, Math.round(options.columns ?? metrics.maxColumns));
   const nodesById = new Map(diagram.nodes.map((node) => [node.id, node]));
   const linksById = new Map(diagram.links.map((link) => [link.id, link]));
   const widestGroup = diagram.groups.reduce(
     (widest, group) => Math.max(widest, group.nodeIds.length, group.linkIds.length),
     1,
   );
-  const columns = Math.min(metrics.maxColumns, Math.max(1, widestGroup));
+  const columns = Math.min(columnLimit, Math.max(1, widestGroup));
   const innerWidth = columns * metrics.nodeWidth + (columns - 1) * metrics.columnGap;
   const groupWidth = innerWidth + metrics.groupPaddingX * 2;
 

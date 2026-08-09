@@ -18,6 +18,7 @@ describe("ListToursWithHealth", () => {
       scope: TourScope.Repository,
       saveTour: () => Promise.reject(new Error("Not used.")),
       updateTour: () => Promise.reject(new Error("Not used.")),
+      renameTour: () => Promise.reject(new Error("Not used.")),
       loadTour: () => Promise.resolve(undefined),
       listTours: () => Promise.resolve([]),
       deleteTour: () => Promise.resolve(),

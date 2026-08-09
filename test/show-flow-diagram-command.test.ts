@@ -46,8 +46,8 @@ function createUserInterface(scope: TourScope | undefined, chosen?: MaybeHealthy
         shown.push(...tours);
         return Promise.resolve(chosen);
       },
-      showDiagram: (value) => {
-        events.push(`diagram:${value.tour.id}`);
+      showDiagram: (diagramScope, value) => {
+        events.push(`diagram:${diagramScope}:${value.tour.id}`);
         return Promise.resolve();
       },
       showInformation: (message) => {
@@ -77,7 +77,7 @@ describe("ShowFlowDiagramCommand", () => {
 
     assert.deepEqual(harness.shown, [healthy]);
     assert.deepEqual(harness.events, [
-      "diagram:auth-api",
+      "diagram:repository:auth-api",
       "log:Showed the flow diagram for repository tour 'auth-api'.",
     ]);
   });
@@ -94,7 +94,7 @@ describe("ShowFlowDiagramCommand", () => {
     ).execute();
 
     assert.deepEqual(harness.shown, [summary]);
-    assert.equal(harness.events[0], "diagram:auth-api");
+    assert.equal(harness.events[0], "diagram:personal:auth-api");
   });
 
   it("does nothing when the author dismisses the scope picker", async () => {

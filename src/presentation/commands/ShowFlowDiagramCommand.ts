@@ -16,7 +16,7 @@ export interface ShowFlowDiagramScopeChoice {
 export interface ShowFlowDiagramUserInterface {
   chooseScope(choices: readonly ShowFlowDiagramScopeChoice[]): Promise<TourScope | undefined>;
   chooseTour(tours: readonly MaybeHealthyTourSummary[]): Promise<MaybeHealthyTourSummary | undefined>;
-  showDiagram(snapshot: TourFlowSnapshot): Promise<void>;
+  showDiagram(scope: TourScope, snapshot: TourFlowSnapshot): Promise<void>;
   showInformation(message: string): Promise<void>;
   showError(message: string): Promise<void>;
 }
@@ -55,7 +55,7 @@ export class ShowFlowDiagramCommand {
       if (!selected) {
         return;
       }
-      await this.userInterface.showDiagram(await this.loadTourFlow.execute(scope, selected.id));
+      await this.userInterface.showDiagram(scope, await this.loadTourFlow.execute(scope, selected.id));
       this.logger.info(`Showed the flow diagram for ${scope} tour '${selected.id}'.`);
     } catch (error) {
       this.logger.error(`Failed to show the flow diagram for a ${scope} tour`, error);

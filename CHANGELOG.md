@@ -4,6 +4,18 @@ All notable changes to Konstelia are documented in this file. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **Play from this hop**: while nothing is playing, a node in the flow diagram can start its
+  tour at that hop, with the same health and binding checks the tour picker applies.
+- `Konstelia: Rename Tour`, which changes a tour id, moves its file, and rewrites the
+  prerequisites and links that point at it.
+- Settings for the flow diagram (`konstelia.flowDiagram.columns`,
+  `konstelia.flowDiagram.revealOnPlayback`) and themable playback highlight colors
+  (`konstelia.primaryAnchorBackground`, `konstelia.secondaryAnchorBackground`).
+
 ## 0.1.0 - 2026-08-09
 
 ### Added

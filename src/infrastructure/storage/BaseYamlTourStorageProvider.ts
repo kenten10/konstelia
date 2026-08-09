@@ -59,6 +59,25 @@ export abstract class BaseYamlTourStorageProvider implements TourStorageProvider
     });
   }
 
+  public renameTour(currentId: string, tour: TourDocument): Promise<TourLocation> {
+    return this.runExclusive(async () => {
+      const files = await this.scanFiles();
+      const match = files.find((file) => file.tour?.id === currentId);
+      if (!match) {
+        throw new Error(`Tour '${currentId}' does not exist in ${this.scope} storage.`);
+      }
+      if (files.some((file) => file.tour?.id === tour.id && file.uri !== match.uri)) {
+        throw new Error(`Tour id '${tour.id}' already exists in ${this.scope} storage.`);
+      }
+      const directory = await this.getToursDirectory();
+      const uri = await findUniqueTourUri(this.fileSystem, directory, tour.id);
+      // Write the new file first; a failure then leaves the original untouched.
+      await this.writeAtomically(directory, uri, serializeTour(tour), false);
+      await this.fileSystem.deleteFile(match.uri);
+      return locationOf(this.scope, uri);
+    });
+  }
+
   public async loadTour(id: string): Promise<TourDocument | undefined> {
     const files = await this.scanTours();
     return files.find(({ tour }) => tour?.id === id)?.tour;

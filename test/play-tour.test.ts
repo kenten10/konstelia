@@ -37,7 +37,7 @@ describe("PlayTour", () => {
       }),
     } as TourAnchorRegistryResolver;
     const playback: TourPlayback = {
-      start: (selectedTour, anchors) => {
+      start: ({ tour: selectedTour, anchors }) => {
         events.push(`play:${selectedTour.id}:${anchors[0]?.id}`);
         return Promise.resolve();
       },
@@ -102,6 +102,81 @@ describe("PlayTourCommand", () => {
     ).execute();
 
     assert.deepEqual(events, ["list:repository", "play:repository:shared"]);
+  });
+
+  it("plays a tour chosen elsewhere from the hop it was chosen at", async () => {
+    const events: string[] = [];
+    const summary = {
+      id: tour.id,
+      title: tour.title,
+      location: { scope: TourScope.Repository, uri: "mem:/shared.tour.yaml" },
+      health: AnchorHealth.Healthy,
+      reasons: [],
+    };
+    const playTour = {
+      execute: (scope: TourScope, id: string, startAt?: { stepIndex: number; hopIndex: number }) => {
+        events.push(`play:${scope}:${id}:${startAt?.stepIndex}:${startAt?.hopIndex}`);
+        return Promise.resolve();
+      },
+    };
+    const userInterface: PlayTourUserInterface = {
+      chooseScope: () => Promise.reject(new Error("The tour is already chosen.")),
+      chooseTour: () => Promise.reject(new Error("The tour is already chosen.")),
+      getCurrentSourceWorkspace: () => ({ uri: "mem:/repo", name: "repo" }),
+      confirmPersonalSourceBinding: () => Promise.resolve(false),
+      showInformation: () => Promise.resolve(),
+      showError: (message) => {
+        events.push(`shown-error:${message}`);
+        return Promise.resolve();
+      },
+    };
+    const logger: Logger = { info: () => undefined, error: () => undefined };
+    const command = new PlayTourCommand(
+      { execute: () => Promise.resolve([]) },
+      { execute: () => Promise.resolve([summary]) },
+      playTour,
+      { get: () => Promise.resolve(undefined), set: () => Promise.resolve() },
+      userInterface,
+      logger,
+    );
+
+    await command.executeForTour(TourScope.Repository, "shared", { stepIndex: 1, hopIndex: 2 });
+
+    assert.deepEqual(events, ["play:repository:shared:1:2"]);
+  });
+
+  it("still blocks a broken tour when it is started from the flow diagram", async () => {
+    const events: string[] = [];
+    const broken = {
+      id: "shared",
+      title: "Shared",
+      location: { scope: TourScope.Repository, uri: "mem:/shared.tour.yaml" },
+      health: AnchorHealth.Broken,
+      reasons: ["entry: missing"],
+    };
+    const userInterface: PlayTourUserInterface = {
+      chooseScope: () => Promise.reject(new Error("Not used.")),
+      chooseTour: () => Promise.reject(new Error("Not used.")),
+      getCurrentSourceWorkspace: () => ({ uri: "mem:/repo", name: "repo" }),
+      confirmPersonalSourceBinding: () => Promise.resolve(false),
+      showInformation: () => Promise.resolve(),
+      showError: (message) => {
+        events.push(`shown-error:${message}`);
+        return Promise.resolve();
+      },
+    };
+
+    await new PlayTourCommand(
+      { execute: () => Promise.resolve([]) },
+      { execute: () => Promise.resolve([broken]) },
+      { execute: () => Promise.reject(new Error("A broken tour must not be played.")) },
+      { get: () => Promise.resolve(undefined), set: () => Promise.resolve() },
+      userInterface,
+      { info: () => undefined, error: () => undefined },
+    ).executeForTour(TourScope.Repository, "shared", { stepIndex: 0, hopIndex: 0 });
+
+    assert.equal(events.length, 1);
+    assert.match(events[0] ?? "", /under maintenance/);
   });
 
   it("requires explicit rebinding before playing a personal tour in another workspace", async () => {

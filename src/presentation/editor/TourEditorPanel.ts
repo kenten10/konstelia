@@ -10,6 +10,7 @@ import { buildTourFlowDiagram } from "../../domain/tour/TourFlowDiagram";
 import type { TourDocument } from "../../domain/tour/TourDocument";
 import type { TourValidationIssue } from "../../domain/tour/TourValidation";
 import type { TourEditorHost } from "../commands/EditTourCommand";
+import { diagramColumns } from "../flow/TourFlowDiagramView";
 import { layoutTourFlowDiagram } from "../flow/TourFlowLayout";
 import { renderTourFlowSvg } from "../flow/TourFlowSvg";
 import { renderTourEditorHtml, type RenderedDraft } from "./TourEditorHtml";
@@ -167,7 +168,7 @@ export class TourEditorPanel {
 
   private postDiagram(tour: TourDocument, requestId: number): void {
     try {
-      const layout = layoutTourFlowDiagram(buildTourFlowDiagram(tour));
+      const layout = layoutTourFlowDiagram(buildTourFlowDiagram(tour), { columns: diagramColumns() });
       void this.post({ type: "diagram", svg: renderTourFlowSvg(layout), requestId });
     } catch {
       // A half-edited document is not worth a diagram; the next edit re-renders it.

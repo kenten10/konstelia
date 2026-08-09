@@ -132,6 +132,12 @@
 - [x] Activate only for workspaces that contain tours, or when a command asks for Konstelia.
 - [x] Move the editor page markup out of the vscode-facing module so its CSP and escaping are tested.
 
+## Milestone 15: Reader and author choices
+
+- [x] Start a tour from a flow diagram node, through the same checks the tour picker applies.
+- [x] Add `Konstelia: Rename Tour`, rewriting the references other tours make to the old id.
+- [x] Contribute settings for the diagram and themable colors for the playback highlight.
+
 ## Deferred
 
 Animation, synchronization, AI assistance, languages beyond the adapters listed above, advanced Git detection, and multi-root repository selection are intentionally deferred. Two consequences of the flow diagram are deferred as well: restoring the panel layout that existed before a tour started (specification §6.4 pairs taking the layout over with restoring it) and preserving YAML comments when the editing screen writes a tour back.
@@ -152,5 +158,6 @@ Animation, synchronization, AI assistance, languages beyond the adapters listed 
 - `TourLocation` carries URI strings rather than `Uri`. Storage keeps `Uri` internally for writing, and the presentation layer parses the string when it needs to open a document. This is what makes `grep -r 'from "vscode"' src/domain src/application` come back empty (§8).
 - The tour editor keeps its working document in webview state, so a window reload restores unsaved work. Only the shape of the stored document is checked, because unsaved work is usually mid-edit and therefore invalid, which the editor is built to display. The check and the state parsing live in `TourEditorState`, away from the vscode API, so they are unit tested.
 - Undo covers structural edits only. Inside a text field the browser's own undo is better, so `Cmd+Z` is only intercepted when the focus is outside one.
+- Renaming a tour rewrites other tours before it moves the renamed file. A failure in the middle then leaves every reference pointing at a tour that still exists, which validation accepts; the reverse order would leave dangling references.
 - Deleting a tour leaves the anchor registry untouched: anchors are shared, so removing them with a tour would break other tours. Dangling references in other tours are surfaced in the confirmation instead.
 - Validation messages stay in English because the same strings are produced for YAML diagnostics, the CLI, and the editing screen. Only surface text that exists solely in the editing screen is written in Japanese.

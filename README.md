@@ -313,6 +313,7 @@ Workspaceスコープはフォルダーまたはworkspaceを開いている場�
 - クロスリンクはステップの下にチップとして表示します（表示のみで、選んでも移動しません）。
 - アンカーのhealthをノードの色で示します。driftedは警告色、brokenとレジストリ未定義はエラー色です。判定は一覧表示やCLIと同じ検証経路を使います。
 - ノードを選ぶと、そのホップのsummary、body、アンカーを図の下に表示します。
+- 再生していないときは、選んだホップの下に**このホップから再生**が出ます。途中のホップから読み始められます（healthやsource bindingの確認は**Konstelia: Play Tour**と同じです）。
 
 ![パネル領域のフロー図。ステップごとのレーンにホップが並び、再生中のホップが強調されている](media/konstelia-flow-diagram.png)
 
@@ -321,6 +322,15 @@ Workspaceスコープはフォルダーまたはworkspaceを開いている場�
 ## ツアーファイルを開く
 
 **Konstelia: Browse Tours**を使うと、スコープを選んで保存済みツアーYAMLを開けます。UIコードは保存パスを組み立てず、選択した`TourScope`をstorage resolverへ渡します。
+
+## 設定
+
+| 設定 | 既定値 | 用途 |
+| --- | --- | --- |
+| `konstelia.flowDiagram.columns` | `3` | フロー図が折り返すまでに横へ並べるホップ数 |
+| `konstelia.flowDiagram.revealOnPlayback` | `true` | ツアー開始時にフロー図のパネルを開くか |
+
+再生中のハイライト色は`konstelia.primaryAnchorBackground`と`konstelia.secondaryAnchorBackground`で、`workbench.colorCustomizations`から変更できます。
 
 ## コマンド一覧
 
@@ -333,6 +343,7 @@ Workspaceスコープはフォルダーまたはworkspaceを開いている場�
 | **Konstelia: Browse Tours** | 保存済みツアーYAMLを開く |
 | **Konstelia: Edit Tour** | 専用の編集画面でツアーを編集する |
 | **Konstelia: Show Flow Diagram** | ツアーのフロー図をパネルに表示する |
+| **Konstelia: Rename Tour** | ツアーidを変更し、参照元のprerequisitesとリンクも更新する |
 | **Konstelia: Delete Tour** | ツアーファイルを削除する（参照元を警告） |
 | **Konstelia: Play Tour** | スコープとツアーを選んで再生する |
 | **Konstelia: Play Sample Tour** | 同梱Repositoryサンプルを直接再生する |

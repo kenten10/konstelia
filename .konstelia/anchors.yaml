@@ -316,20 +316,19 @@ anchors:
     refinement: call(chooseScope)[0]
   - id: konstelia.play-tour-command.list-with-health
     file: src/presentation/commands/PlayTourCommand.ts
-    symbol: PlayTourCommand.execute
-    refinement: call(execute)[1]
+    symbol: PlayTourCommand.listPlayableTours
   - id: konstelia.play-tour-command.ensure-binding
     file: src/presentation/commands/PlayTourCommand.ts
-    symbol: PlayTourCommand.execute
+    symbol: PlayTourCommand.play
     refinement: call(ensurePersonalSourceBinding)[0]
   - id: konstelia.play-tour-command.block-broken
     file: src/presentation/commands/PlayTourCommand.ts
-    symbol: PlayTourCommand.execute
-    refinement: if[5]
+    symbol: PlayTourCommand.play
+    refinement: if[2]
   - id: konstelia.play-tour-command.delegate-play
     file: src/presentation/commands/PlayTourCommand.ts
-    symbol: PlayTourCommand.execute
-    refinement: call(execute)[3]
+    symbol: PlayTourCommand.play
+    refinement: call(execute)[1]
   - id: konstelia.list-health.scan-tours
     file: src/application/tours/ListToursWithHealth.ts
     symbol: ListToursWithHealth.execute

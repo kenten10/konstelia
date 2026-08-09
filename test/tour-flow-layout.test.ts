@@ -57,6 +57,25 @@ describe("layoutTourFlowDiagram", () => {
     }
   });
 
+  it("wraps at the width the author configured", () => {
+    const diagram = buildTourFlowDiagram(tourWithHops(4));
+
+    const narrow = layoutTourFlowDiagram(diagram, { columns: 2 });
+    const wide = layoutTourFlowDiagram(diagram, { columns: 4 });
+
+    assert.equal(narrow.nodes[2]?.y, (narrow.nodes[0]?.y ?? 0) + flowLayoutMetrics.nodeHeight + flowLayoutMetrics.rowGap);
+    assert.equal(wide.nodes[3]?.y, wide.nodes[0]?.y);
+    assert.ok(wide.width > narrow.width);
+  });
+
+  it("clamps a configured width that would make no sense", () => {
+    const diagram = buildTourFlowDiagram(tourWithHops(4));
+
+    const zero = layoutTourFlowDiagram(diagram, { columns: 0 });
+
+    assert.equal(zero.nodes[1]?.x, zero.nodes[0]?.x, "one hop per row");
+  });
+
   it("reserves room for a step that has no hops yet", () => {
     const withEmptyStep = layoutTourFlowDiagram(buildTourFlowDiagram({
       id: "empty",

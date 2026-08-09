@@ -47,6 +47,7 @@ function createUpdateTour(options: {
   const storage = {
     scope: TourScope.Repository,
     saveTour: () => Promise.reject(new Error("Not used.")),
+    renameTour: () => Promise.reject(new Error("Not used.")),
     updateTour: (tour: TourDocument) => {
       options.updates?.push(tour);
       const match = files.find((file) => file.tour?.id === tour.id);

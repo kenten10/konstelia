@@ -36,6 +36,7 @@ describe("CreateTour", () => {
         return Promise.resolve({ scope: TourScope.Repository, uri: `mem:/${tour.id}` });
       },
       updateTour: () => Promise.reject(new Error("Not used.")),
+      renameTour: () => Promise.reject(new Error("Not used.")),
     };
 
     await new CreateTour(new DefaultTourStorageResolver([provider])).execute({

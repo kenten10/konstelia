@@ -25,6 +25,8 @@ export interface TourStorageProvider {
   readonly scope: TourScope;
   saveTour(tour: TourDocument): Promise<TourLocation>;
   updateTour(tour: TourDocument): Promise<TourLocation>;
+  /** Writes `tour` under a file name derived from its new id and removes the old file. */
+  renameTour(currentId: string, tour: TourDocument): Promise<TourLocation>;
   loadTour(id: string): Promise<TourDocument | undefined>;
   listTours(): Promise<TourSummary[]>;
   scanTours(): Promise<StoredTourFile[]>;

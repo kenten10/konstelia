@@ -63,6 +63,11 @@
         "category": "Konstelia"
       },
       {
+        "command": "konstelia.renameTour",
+        "title": "Rename Tour",
+        "category": "Konstelia"
+      },
+      {
         "command": "konstelia.deleteTour",
         "title": "Delete Tour",
         "category": "Konstelia"
@@ -101,6 +106,43 @@
         }
       ]
     },
+    "configuration": {
+      "title": "Konstelia",
+      "properties": {
+        "konstelia.flowDiagram.columns": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 8,
+          "description": "How many hops a flow diagram places side by side before wrapping to the next row."
+        },
+        "konstelia.flowDiagram.revealOnPlayback": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open the Konstelia panel with the flow diagram when a tour starts."
+        }
+      }
+    },
+    "colors": [
+      {
+        "id": "konstelia.primaryAnchorBackground",
+        "description": "Background of the primary anchor highlighted during playback.",
+        "defaults": {
+          "dark": "editor.findMatchBackground",
+          "light": "editor.findMatchBackground",
+          "highContrast": "editor.findMatchBackground"
+        }
+      },
+      {
+        "id": "konstelia.secondaryAnchorBackground",
+        "description": "Background of the secondary anchors shown alongside the primary one.",
+        "defaults": {
+          "dark": "editor.findMatchHighlightBackground",
+          "light": "editor.findMatchHighlightBackground",
+          "highContrast": "editor.findMatchHighlightBackground"
+        }
+      }
+    ],
     "viewsContainers": {
       "panel": [
         {

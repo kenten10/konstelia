@@ -280,6 +280,7 @@ Run **Konstelia: Show Flow Diagram** to render a tour in the Konstelia view of t
 - Cross links appear as chips below their step. They are informational and do not navigate.
 - Node colors report anchor health: drifted anchors use the warning color, while broken and unregistered anchors use the error color. The assessment runs through the same validation path as the catalog and the CLI.
 - Selecting a node shows that hop's summary, body, and anchors below the diagram.
+- While nothing is playing, the selected hop offers **Play from this hop**, so a reader can start in the middle. Health and source binding are checked exactly as **Konstelia: Play Tour** checks them.
 
 ![The flow diagram in the panel area: one lane per step, with the hop being played highlighted](media/konstelia-flow-diagram.png)
 
@@ -288,6 +289,15 @@ While a tour is playing, the view subscribes to `TourPlayer` and highlights the 
 ## Open tour files
 
 Use **Konstelia: Browse Tours** to choose a scope and open a saved tour YAML file. UI code does not construct storage paths; it passes the selected `TourScope` to the storage resolver.
+
+## Settings
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `konstelia.flowDiagram.columns` | `3` | How many hops a flow diagram places side by side before wrapping |
+| `konstelia.flowDiagram.revealOnPlayback` | `true` | Open the Konstelia panel with the flow diagram when a tour starts |
+
+Playback highlight colors are `konstelia.primaryAnchorBackground` and `konstelia.secondaryAnchorBackground`, which can be overridden through `workbench.colorCustomizations`.
 
 ## Commands
 
@@ -300,6 +310,7 @@ Use **Konstelia: Browse Tours** to choose a scope and open a saved tour YAML fil
 | **Konstelia: Browse Tours** | Open a saved tour YAML file |
 | **Konstelia: Edit Tour** | Edit a tour in the dedicated editing screen |
 | **Konstelia: Show Flow Diagram** | Show a tour's flow diagram in the panel |
+| **Konstelia: Rename Tour** | Change a tour id and update the prerequisites and links that point at it |
 | **Konstelia: Delete Tour** | Delete a tour file, warning about tours that reference it |
 | **Konstelia: Play Tour** | Select a scope and tour, then play it |
 | **Konstelia: Play Sample Tour** | Directly play the bundled Repository sample |

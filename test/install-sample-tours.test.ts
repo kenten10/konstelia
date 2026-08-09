@@ -61,7 +61,7 @@ describe("InstallSampleTours", () => {
     assert.equal(second.every((result) => !result.installed), true);
     const played: string[] = [];
     const playback: TourPlayback = {
-      start: (tour, anchors) => {
+      start: ({ tour, anchors }) => {
         played.push(`${tour.id}:${anchors.map((anchor) => anchor.id).join(",")}`);
         return Promise.resolve();
       },

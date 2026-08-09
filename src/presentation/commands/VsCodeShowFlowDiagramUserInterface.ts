@@ -39,8 +39,8 @@ export class VsCodeShowFlowDiagramUserInterface implements ShowFlowDiagramUserIn
     return (await window.showQuickPick(items, { placeHolder: "Choose a tour to diagram" }))?.tour;
   }
 
-  public showDiagram(snapshot: TourFlowSnapshot): Promise<void> {
-    return this.view.show(snapshot.tour, snapshot.anchorHealth);
+  public showDiagram(scope: TourScope, snapshot: TourFlowSnapshot): Promise<void> {
+    return this.view.show(scope, snapshot.tour, snapshot.anchorHealth);
   }
 
   public async showInformation(message: string): Promise<void> {

@@ -20,6 +20,6 @@ export class PlaySampleTour implements PlaySampleTourUseCase {
       throw new Error("Sample tour not found in repository storage.");
     }
     const anchors = await this.anchorRegistry.loadAnchors();
-    await this.playback.start(tour, anchors);
+    await this.playback.start({ tour, anchors, scope: TourScope.Repository });
   }
 }

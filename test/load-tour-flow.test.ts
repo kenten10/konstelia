@@ -56,6 +56,7 @@ function createDependencies(files: readonly StoredTourFile[], readFiles: string[
     scope: TourScope.Repository,
     saveTour: () => Promise.reject(new Error("Not used.")),
     updateTour: () => Promise.reject(new Error("Not used.")),
+    renameTour: () => Promise.reject(new Error("Not used.")),
     loadTour: (id: string) => Promise.resolve(files.find((file) => file.tour?.id === id)?.tour),
     listTours: () => Promise.resolve([]),
     scanTours: () => Promise.resolve([...files]),
