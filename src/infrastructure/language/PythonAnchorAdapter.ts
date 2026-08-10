@@ -295,7 +295,8 @@ function collectRefinements(symbolNode: SyntaxNode, sourceText: string): Refinem
 
 function pythonRefinementKey(node: SyntaxNode, sourceText: string): string | undefined {
   if (node.name === "IfStatement") return "if";
-  if (node.name === "ForStatement") return "for";
+  if (node.name === "ForStatement" || node.name === "WhileStatement") return "for";
+  if (node.name === "MatchStatement") return "switch";
   if (node.name === "ReturnStatement") return "return";
   if (node.name === "CallExpression") {
     const name = calleeName(node, sourceText);

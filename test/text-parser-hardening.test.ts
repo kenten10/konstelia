@@ -160,3 +160,69 @@ end
     assert.match(source.slice(resolved.range.start, resolved.range.end), /^if \(n > 0\)/);
   });
 });
+
+describe("member and refinement coverage", () => {
+  const adapter = new DefaultSemanticAnchorAdapter();
+
+  function roundTrip(fileName: string, source: string, selection: string) {
+    const start = source.indexOf(selection);
+    assert.notEqual(start, -1, `Selection not found: ${selection}`);
+    const generated = adapter.generate(source, fileName, start, start + selection.length);
+    assert.equal(generated.ok, true, generated.ok ? undefined : generated.reason);
+    if (!generated.ok) return undefined;
+    assert.deepEqual(
+      adapter.resolve(source, fileName, generated.target.symbol, generated.target.refinement),
+      { ok: true, range: generated.target.range },
+    );
+    return generated.target;
+  }
+
+  it("addresses Swift initializers, deinitializers, and subscripts", () => {
+    const source = `struct Store {
+  init(values: [Int]) { self.values = values }
+  subscript(index: Int) -> Int { return values[index] }
+}
+
+class Session {
+  deinit { close() }
+}
+`;
+    assert.equal(roundTrip("Store.swift", source, "self.values = values")?.symbol, "Store.init");
+    assert.equal(roundTrip("Store.swift", source, "return values[index]")?.symbol, "Store.subscript");
+    assert.equal(roundTrip("Store.swift", source, "close()")?.symbol, "Session.deinit");
+  });
+
+  it("treats every loop as a for refinement", () => {
+    const typescript = `export function drain(items: string[]) {
+  while (items.length) {
+    items.pop();
+  }
+}
+`;
+    const python = `def drain(items):
+    while items:
+        items.pop()
+`;
+    assert.equal(
+      roundTrip("drain.ts", typescript, "while (items.length) {\n    items.pop();\n  }")?.refinement,
+      "for[0]",
+    );
+    assert.equal(
+      roundTrip("drain.py", python, "while items:\n        items.pop()")?.refinement,
+      "for[0]",
+    );
+  });
+
+  it("treats a Python match as a switch refinement", () => {
+    const source = `def classify(value):
+    match value:
+        case 1:
+            return "one"
+`;
+
+    assert.equal(
+      roundTrip("classify.py", source, 'match value:\n        case 1:\n            return "one"')?.refinement,
+      "switch[0]",
+    );
+  });
+});

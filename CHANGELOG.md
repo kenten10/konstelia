@@ -16,6 +16,12 @@ All notable changes to Konstelia are documented in this file. The format follows
   `konstelia.flowDiagram.revealOnPlayback`) and themable playback highlight colors
   (`konstelia.primaryAnchorBackground`, `konstelia.secondaryAnchorBackground`).
 
+### Added
+
+- Swift `init`, `deinit`, and `subscript` members can be anchored.
+- `while` and `do` loops are `for` refinements in TypeScript, and a Python `match` is a
+  `switch` refinement, matching what the other language adapters already did.
+
 ### Changed
 
 - A reference no anchor registry answers is now reported with the same wording everywhere.

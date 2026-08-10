@@ -151,6 +151,12 @@
 - [x] Parse a file once per repair scan instead of twice per candidate.
 - [x] Resolve the anchors of a hop again when it is shown, so a mid-tour edit does not misplace it.
 
+## Milestone 18: Language coverage
+
+- [x] Address Swift `init`, `deinit`, and `subscript` members.
+- [x] Count `while` and `do` loops as `for` refinements in TypeScript, matching the other adapters.
+- [x] Count a Python `match` as a `switch` refinement and a Python `while` as a `for` refinement.
+
 ## Deferred
 
 Animation, synchronization, AI assistance, languages beyond the adapters listed above, advanced Git detection, and multi-root repository selection are intentionally deferred. Two consequences of the flow diagram are deferred as well: restoring the panel layout that existed before a tour started (specification §6.4 pairs taking the layout over with restoring it) and preserving YAML comments when the editing screen writes a tour back.
@@ -174,6 +180,7 @@ Animation, synchronization, AI assistance, languages beyond the adapters listed 
 - Undo covers structural edits only. Inside a text field the browser's own undo is better, so `Cmd+Z` is only intercepted when the focus is outside one.
 - Renaming a tour rewrites other tours before it moves the renamed file. A failure in the middle then leaves every reference pointing at a tour that still exists, which validation accepts; the reverse order would leave dangling references.
 - Deleting a tour leaves the anchor registry untouched: anchors are shared, so removing them with a tour would break other tours. Dangling references in other tours are surfaced in the confirmation instead.
+- Refinement keys describe the shape, not the keyword: every loop is `for` and every multi-way branch is `switch`, in all adapters. Ruby's iterator blocks (`items.each do |item|`) count as `for` for the same reason, which also means a non-looping `do` block is counted; narrowing that would mean guessing which methods iterate.
 - A repair scan over a 2,500-line C# file took 18.5s before it parsed once per scan and 74ms after; the text-scanned adapters had been parsing the document twice for every candidate range. The compiler-backed TypeScript adapter was already reusing its `SourceFile` and is unchanged at roughly 0.16ms per candidate.
 - A crash between writing a temporary file and renaming it can leave a `.tour.*.tmp` or `.anchors.*.tmp` behind. Sweeping them automatically risks deleting a write that another window has in flight, so they are left for the author to remove; scanning ignores them.
 - Validation messages stay in English because the same strings are produced for YAML diagnostics, the CLI, and the editing screen. Only surface text that exists solely in the editing screen is written in Japanese.

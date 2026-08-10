@@ -460,7 +460,14 @@ function collectRefinements(symbolNode: ts.Node): RefinementNode[] {
 
 function refinementKey(node: ts.Node): string | undefined {
   if (ts.isIfStatement(node)) return "if";
-  if (ts.isForStatement(node) || ts.isForInStatement(node) || ts.isForOfStatement(node)) return "for";
+  // Every loop form is a `for` refinement, as it is for the parser-backed adapters.
+  if (
+    ts.isForStatement(node) ||
+    ts.isForInStatement(node) ||
+    ts.isForOfStatement(node) ||
+    ts.isWhileStatement(node) ||
+    ts.isDoStatement(node)
+  ) return "for";
   if (ts.isSwitchStatement(node)) return "switch";
   if (ts.isReturnStatement(node)) return "return";
   if (ts.isCallExpression(node)) return `call(${calleeName(node) ?? "?"})`;

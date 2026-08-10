@@ -113,9 +113,10 @@ export function parseSwiftDocument(sourceText: string): StructuralDocument {
     else drafts.push({ kind: "container", name, start: match.index, end, refinements: [] });
   }
 
-  const functionPattern = /\bfunc\s+([A-Za-z_]\w*)\s*(?:<[^\n>{}]*>)?\s*\([^{}]*\)[^\n{]*\{/g;
+  // `init`, `deinit`, and `subscript` are members an author points at as often as a `func`.
+  const functionPattern = /\b(?:func\s+([A-Za-z_]\w*)|(init\??|deinit|subscript))\s*(?:<[^\n>{}]*>)?\s*(?:\([^{}]*\))?[^\n{]*\{/g;
   for (const match of masked.matchAll(functionPattern)) {
-    const name = match[1];
+    const name = match[1] ?? match[2]?.replace("?", "");
     if (!name || match.index === undefined) continue;
     const open = match.index + match[0].lastIndexOf("{");
     const end = matchingBrace(masked, open);
