@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DefaultSemanticAnchorAdapter } from "../src/infrastructure/language/DefaultSemanticAnchorAdapter";
+import { StructuralSemanticAnchorAdapter } from "../src/infrastructure/language/StructuralSemanticAnchorAdapter";
+import { parseCSharpDocument } from "../src/infrastructure/language/TextStructuralParsers";
 
 describe("multi-language semantic anchors", () => {
   const adapter = new DefaultSemanticAnchorAdapter();
@@ -148,3 +150,24 @@ function assertRoundTrip(
     { ok: true, range: generated.target.range },
   );
 }
+
+describe("repair candidate scans", () => {
+  it("parses the file once, not once per candidate", () => {
+    let parses = 0;
+    const adapter = new StructuralSemanticAnchorAdapter("Test", (sourceText) => {
+      parses += 1;
+      return parseCSharpDocument(sourceText);
+    });
+    const source = `public class Service {
+  public int A(string input) { if (input.Length > 0) { return 1; } return 0; }
+  public int B(string input) { return 2; }
+  public int C(string input) { return 3; }
+}
+`;
+
+    const candidates = adapter.findSimilarSnapshotCandidates(source, "Service.cs", "public int B(string input) { return 2; }");
+
+    assert.ok(candidates.length > 3, "the scan must consider every candidate range");
+    assert.equal(parses, 1);
+  });
+});

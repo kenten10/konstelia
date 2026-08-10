@@ -164,6 +164,7 @@ export class VsCodeTourPlayback {
     }
 
     this.running = true;
+    const registry = new Map(anchors.map((anchor) => [anchor.id, anchor]));
     try {
       const prepared = await this.prepareAnchors(tour, anchors, rootLocator);
       this.notifyStarted(scope, tour, player, prepared);
@@ -173,7 +174,7 @@ export class VsCodeTourPlayback {
         if (!current) {
           break;
         }
-        const rendered = await this.render(current, prepared);
+        const rendered = await this.render(current, prepared, registry, rootLocator);
         player.setHealth(rendered.health);
         const action = await this.showPopover(tour, current, rendered.target, player);
         const target = this.pendingGoto;
@@ -288,11 +289,15 @@ export class VsCodeTourPlayback {
   private async render(
     current: TourPlayerPosition,
     prepared: ReadonlyMap<string, PreparedAnchor>,
+    registry: ReadonlyMap<string, TourAnchor>,
+    rootLocator: RepositoryRootLocator,
   ): Promise<RenderedHop> {
     this.clearDecorations();
     const resolved: ResolvedAnchor[] = [];
     for (const reference of current.hop.anchors) {
-      const anchor = prepared.get(reference.ref);
+      // Resolve again from the document as it stands now: the reader may have edited the file
+      // since the preflight, which would leave the saved offsets pointing at the wrong lines.
+      const anchor = await this.refresh(reference.ref, prepared, registry, rootLocator);
       if (!anchor?.target) {
         continue;
       }
@@ -339,6 +344,25 @@ export class VsCodeTourPlayback {
         ? AnchorHealth.Drifted
         : AnchorHealth.Healthy,
     };
+  }
+
+  /**
+   * Re-resolves one reference for the hop about to be shown. A reference that resolved during
+   * the preflight but fails now keeps its earlier result, so a mid-tour edit cannot blank a hop.
+   */
+  private async refresh(
+    ref: string,
+    prepared: ReadonlyMap<string, PreparedAnchor>,
+    registry: ReadonlyMap<string, TourAnchor>,
+    rootLocator: RepositoryRootLocator,
+  ): Promise<PreparedAnchor | undefined> {
+    const anchor = registry.get(ref);
+    const preflight = prepared.get(ref);
+    if (!anchor || !preflight?.target) {
+      return preflight;
+    }
+    const refreshed = await this.resolveAnchor(anchor, rootLocator);
+    return refreshed.target ? refreshed : preflight;
   }
 
   private async resolveAnchor(

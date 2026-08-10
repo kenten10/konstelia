@@ -39,11 +39,20 @@ export class StructuralSemanticAnchorAdapter implements SemanticAnchorAdapter {
 
   public generate(
     sourceText: string,
-    fileName: string,
+    _fileName: string,
     rawStart: number,
     rawEnd: number,
   ): GenerateSemanticAnchorResult {
-    const document = this.parseDocument(sourceText);
+    return this.generateFrom(this.parseDocument(sourceText), sourceText, rawStart, rawEnd);
+  }
+
+  /** Generation over an already parsed document, so a scan can parse the file once. */
+  private generateFrom(
+    document: StructuralDocument,
+    sourceText: string,
+    rawStart: number,
+    rawEnd: number,
+  ): GenerateSemanticAnchorResult {
     const [start, end] = normalizeSelection(sourceText, rawStart, rawEnd);
     const symbol = document.symbols
       .filter((candidate) => contains(candidate.range, start, end))
@@ -80,7 +89,7 @@ export class StructuralSemanticAnchorAdapter implements SemanticAnchorAdapter {
           snapped: refinement.range.start !== start || refinement.range.end !== end,
           note: `Selection resolved through a ${this.languageName} structural refinement.`,
         };
-    const resolved = this.resolve(sourceText, fileName, target.symbol, target.refinement);
+    const resolved = this.resolveIn(document, target.symbol, target.refinement);
     return resolved.ok && equalRange(resolved.range, target.range)
       ? { ok: true, target }
       : { ok: false, reason: `The generated ${this.languageName} symbol-path did not resolve to its source range.` };
@@ -92,7 +101,14 @@ export class StructuralSemanticAnchorAdapter implements SemanticAnchorAdapter {
     symbolPath: string,
     refinement?: string | null,
   ): ResolveSemanticAnchorResult {
-    const document = this.parseDocument(sourceText);
+    return this.resolveIn(this.parseDocument(sourceText), symbolPath, refinement);
+  }
+
+  private resolveIn(
+    document: StructuralDocument,
+    symbolPath: string,
+    refinement?: string | null,
+  ): ResolveSemanticAnchorResult {
     let parsedPath;
     try {
       parsedPath = parseTypeScriptSymbolPath(symbolPath);
@@ -148,12 +164,15 @@ export class StructuralSemanticAnchorAdapter implements SemanticAnchorAdapter {
 
   public findSimilarSnapshotCandidates(
     sourceText: string,
-    fileName: string,
+    _fileName: string,
     snapshotText: string,
   ): SimilarSemanticAnchor[] {
-    return uniqueRanges(candidateRanges(this.parseDocument(sourceText)))
+    // One parse for the whole scan: generating each candidate used to reparse the file twice,
+    // which made a repair search quadratic in the size of the file.
+    const document = this.parseDocument(sourceText);
+    return uniqueRanges(candidateRanges(document))
       .map((range): SimilarSemanticAnchor | undefined => {
-        const generated = this.generate(sourceText, fileName, range.start, range.end);
+        const generated = this.generateFrom(document, sourceText, range.start, range.end);
         if (!generated.ok) return undefined;
         return {
           target: generated.target,

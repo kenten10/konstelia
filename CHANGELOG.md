@@ -19,6 +19,10 @@ All notable changes to Konstelia are documented in this file. The format follows
 ### Changed
 
 - A reference no anchor registry answers is now reported with the same wording everywhere.
+- Repair candidate scans parse a file once instead of twice per candidate. A 2,500-line C#
+  file went from 18.5 seconds to 74 milliseconds.
+- The anchors of a hop are resolved again when it is shown, so editing during a tour no longer
+  leaves later hops pointing at the wrong lines.
 
 ## 0.1.0 - 2026-08-09
 
